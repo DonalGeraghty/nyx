@@ -33,6 +33,15 @@ export async function analyzeMeal(message) {
   return data.analysis
 }
 
+export async function recommendMeals(context) {
+  const data = await nutritionRequest(API_ENDPOINTS.NUTRITION_RECOMMEND, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(context),
+  })
+  return data.recommendation
+}
+
 export async function logMeal(items, sourceMessage) {
   return createMealEntry({
     items,

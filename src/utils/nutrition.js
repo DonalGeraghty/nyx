@@ -45,3 +45,29 @@ export function aggregateRecentDays(entries, dayCount = 7, now = new Date()) {
     }),
   }))
 }
+
+export function filterEntriesForLocalDay(entries, now = new Date()) {
+  return entries.filter((entry) => {
+    const datetime = new Date(entry.datetime)
+    return (
+      datetime.getFullYear() === now.getFullYear()
+      && datetime.getMonth() === now.getMonth()
+      && datetime.getDate() === now.getDate()
+    )
+  })
+}
+
+export function totalNutrition(entries) {
+  return entries.reduce(
+    (totals, entry) => ({
+      calories: totals.calories + Number(entry.calories || 0),
+      protein: Math.round((totals.protein + Number(entry.protein || 0)) * 10) / 10,
+      meals: totals.meals + 1,
+    }),
+    { calories: 0, protein: 0, meals: 0 },
+  )
+}
+
+export function totalNutritionForLocalDay(entries, now = new Date()) {
+  return totalNutrition(filterEntriesForLocalDay(entries, now))
+}

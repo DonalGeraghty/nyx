@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
   AUTH_DELETE_ACCOUNT: '/api/auth/account',
   OPENAI_KEY: '/api/user/openai-key',
   NUTRITION_ANALYZE: '/api/nutrition/analyze',
+  NUTRITION_RECOMMEND: '/api/nutrition/recommend',
   NUTRITION_ENTRIES: '/api/nutrition/entries',
 }
 

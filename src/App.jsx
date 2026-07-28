@@ -16,6 +16,7 @@ import NyxAIHome from './pages/NyxAIHome'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 const ChartsPage = React.lazy(() => import('./pages/ChartsPage'))
+const RecommendationsPage = React.lazy(() => import('./pages/RecommendationsPage'))
 
 function AppDock() {
   const location = useLocation()
@@ -31,6 +32,7 @@ function AppDock() {
     { label: 'Home', icon: <span aria-hidden="true">⌂</span>, onClick: () => goTo('/'), current: location.pathname === '/' },
     { label: 'Data', icon: <span aria-hidden="true">≡</span>, onClick: () => goTo('/data'), current: location.pathname === '/data' },
     { label: 'Charts', icon: <span aria-hidden="true">▥</span>, onClick: () => goTo('/charts'), current: location.pathname === '/charts' },
+    { label: 'Recommend', icon: <span aria-hidden="true">R</span>, onClick: () => goTo('/recommendations'), current: location.pathname === '/recommendations' },
     { label: 'Account', icon: <span aria-hidden="true">●</span>, onClick: () => goTo('/account'), current: location.pathname === '/account' },
     { label: 'Log out', icon: <span aria-hidden="true">↪</span>, onClick: logout, testId: 'nav-sign-out' },
   ]
@@ -70,6 +72,14 @@ function AppRoutes() {
           element={(
             <React.Suspense fallback={<div className="page-loading">Loading charts…</div>}>
               <ChartsPage />
+            </React.Suspense>
+          )}
+        />
+        <Route
+          path="/recommendations"
+          element={(
+            <React.Suspense fallback={<div className="page-loading">Loading recommendations…</div>}>
+              <RecommendationsPage />
             </React.Suspense>
           )}
         />

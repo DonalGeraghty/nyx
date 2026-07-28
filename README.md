@@ -13,6 +13,7 @@ The browser application is backed by [Janus Gate](https://github.com/DonalGeragh
 - Manual creation, editing, and deletion of nutrition entries
 - CSV export of nutrition history
 - Seven-day calorie and protein charts
+- AI meal recommendations based on today's nutrition and personal targets
 - Responsive navigation and installable-app metadata
 
 ## Architecture
@@ -75,6 +76,7 @@ The Vitest tooling is configured, but this repository does not currently contain
 | `/` | Meal analysis and reviewed logging |
 | `/data` | Nutrition-entry management and CSV export |
 | `/charts` | Seven-day calorie and protein trends |
+| `/recommendations` | Protein-focused meal planning for the rest of today |
 | `/account` | OpenAI key status, account details, and account deletion |
 
 All application routes use the authenticated layout. Visitors without a valid session see the registration and sign-in screen.
@@ -86,6 +88,7 @@ Nyx AI uses these API groups:
 - `/api/auth/*` for registration, login, session validation, and account deletion
 - `/api/user/openai-key` for OpenAI key status, replacement, and removal
 - `/api/nutrition/analyze` for structured meal estimates
+- `/api/nutrition/recommend` for structured rest-of-day meal recommendations
 - `/api/nutrition/entries` for nutrition-entry CRUD
 
 The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. A supplied OpenAI key exists in component state only while it is being submitted. Janus Gate verifies and encrypts the key; Nyx AI can retrieve only safe status metadata.

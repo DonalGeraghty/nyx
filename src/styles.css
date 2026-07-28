@@ -316,16 +316,167 @@ button, input, textarea { font: inherit; }
 
 .nyxai-home-card-title { font-weight: 700; }
 
+.recommendations-header p { margin-top: -.4rem; }
+
+.recommendation-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 2rem 0 1rem;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  background: var(--border);
+}
+
+.recommendation-progress > div {
+  display: grid;
+  gap: .5rem;
+  padding: 1rem;
+  background: var(--surface);
+}
+
+.recommendation-progress span,
+.recommendation-form label,
+.recommendation-meal-count legend,
+.recommendation-eyebrow,
+.recommended-meal header span,
+.recommended-meal li span,
+.recommendation-plan-total span,
+.recommendation-projection > span {
+  color: var(--muted);
+  font-size: .85rem;
+}
+
+.recommendation-form,
+.recommendation-result {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  background: var(--surface);
+}
+
+.recommendation-form { display: grid; gap: 1.25rem; }
+.recommendation-targets { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.recommendation-form label { display: grid; gap: .4rem; }
+
+.recommendation-form input,
+.recommendation-form textarea {
+  width: 100%;
+  padding: .75rem;
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+  color: var(--text);
+  background: var(--background);
+}
+
+.recommendation-form input:focus,
+.recommendation-form textarea:focus {
+  border-color: var(--border-hover);
+  outline: 2px solid #333;
+}
+
+.recommendation-input-unit { position: relative; display: block; }
+.recommendation-input-unit > span {
+  position: absolute;
+  top: 50%;
+  right: .75rem;
+  color: var(--muted);
+  transform: translateY(-50%);
+}
+.recommendation-input-unit input { padding-right: 2.25rem; }
+
+.recommendation-meal-count { padding: 0; border: 0; }
+.recommendation-meal-count legend { margin-bottom: .5rem; }
+.recommendation-meal-count > div { display: flex; gap: .5rem; }
+.recommendation-meal-count button {
+  width: 3rem;
+  padding: .6rem;
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+  color: var(--muted);
+  background: var(--background);
+  cursor: pointer;
+}
+.recommendation-meal-count button.active {
+  border-color: #777;
+  color: var(--text);
+  background: var(--surface-raised);
+}
+.recommendation-preferences > span { color: #666; }
+.recommendation-form textarea { resize: vertical; }
+.recommendation-disclaimer { margin: -.25rem 0 0; font-size: .82rem; line-height: 1.5; }
+
+.recommendation-submit {
+  width: 100%;
+  padding: .8rem 1rem;
+  border: 1px solid var(--border-hover);
+  border-radius: .5rem;
+  color: var(--text);
+  background: var(--surface-raised);
+  cursor: pointer;
+}
+
+.recommendation-submit:disabled,
+.recommendation-meal-count button:disabled { opacity: .45; cursor: not-allowed; }
+.recommendation-result { margin-top: 1.5rem; }
+.recommendation-result-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+.recommendation-result-heading h2 { max-width: 38rem; margin: .35rem 0 0; font-size: 1.1rem; line-height: 1.45; }
+.recommendation-plan-total { display: grid; flex: 0 0 auto; justify-items: end; gap: .25rem; }
+.recommended-meals { display: grid; gap: 1rem; margin-top: 1.25rem; }
+
+.recommended-meal {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: .65rem;
+  background: var(--background);
+}
+
+.recommended-meal header,
+.recommended-meal li {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.recommended-meal header > div,
+.recommended-meal li > div { display: grid; gap: .2rem; }
+.recommended-meal header > div:last-child,
+.recommended-meal li > div:last-child { flex: 0 0 auto; justify-items: end; }
+.recommended-meal h3 { margin: .25rem 0 0; font-size: 1rem; }
+.recommended-meal ul { display: grid; gap: .65rem; margin: 1rem 0; padding: 0; list-style: none; }
+.recommended-meal li { padding-top: .65rem; border-top: 1px solid var(--border); }
+.recommended-meal > p { margin: .75rem 0 0; font-size: .88rem; line-height: 1.5; }
+
+.recommendation-projection {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: .6rem;
+  background: var(--surface-raised);
+}
+.recommendation-projection > span { margin-right: auto; }
+
 @media (max-width: 36rem) {
   .message-composer button { width: 100%; }
   .meal-result-heading,
   .meal-items > li { align-items: start; }
   .meal-result-heading { display: grid; }
   .meal-totals { justify-items: start; }
+  .recommendation-targets { grid-template-columns: 1fr; }
+  .recommendation-result-heading { display: grid; }
+  .recommendation-plan-total { justify-items: start; }
+  .recommendation-projection { display: grid; gap: .4rem; }
+  .recommendation-projection > span { margin-right: 0; }
 }
 
 @media (max-width: 50rem) {
   .metric-grid { grid-template-columns: repeat(2, 1fr); }
+  .recommendation-progress { grid-template-columns: repeat(2, 1fr); }
   .chart-grid { grid-template-columns: 1fr; }
   .entry-editor-item { grid-template-columns: 1fr 1fr; }
 }
