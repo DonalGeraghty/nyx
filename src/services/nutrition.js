@@ -1,11 +1,14 @@
 import { API_ENDPOINTS, authFetch } from '../config/api'
 
 export class NutritionApiError extends Error {
-  constructor(message, status, code) {
+  constructor(message, status, code, metadata = {}) {
     super(message)
     this.name = 'NutritionApiError'
     this.status = status
     this.code = code
+    this.provider = metadata.provider
+    this.model = metadata.model
+    this.details = metadata.details
   }
 }
 
@@ -17,7 +20,8 @@ async function nutritionRequest(path, options) {
     throw new NutritionApiError(
       data.message || data.error || 'Nutrition request failed',
       response.status,
-      data.error
+      data.error,
+      data
     )
   }
 

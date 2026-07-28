@@ -2,13 +2,14 @@
 
 Nyx AI is an authenticated nutrition-tracking web application. It turns a plain-language meal description into structured calorie and protein estimates, lets the user review the result, and stores only entries the user chooses to log.
 
-The browser application is backed by [Janus Gate](https://github.com/DonalGeraghty/Janus-Gate), which provides authentication, encrypted per-user OpenAI credential storage, meal analysis, and nutrition-entry persistence.
+The browser application is backed by [Janus Gate](https://github.com/DonalGeraghty/Janus-Gate), which provides authentication, encrypted per-user AI-provider credential storage, meal analysis, and nutrition-entry persistence.
 
 ## Features
 
 - Account registration, sign-in, sign-out, and permanent account deletion
 - Development-only demo account with local sample data
-- Bring-your-own-key OpenAI integration
+- Bring-your-own-key OpenAI and Mistral AI integrations
+- Per-user AI provider and model selection
 - AI-assisted meal analysis with structured, reviewable results
 - Manual creation, editing, and deletion of nutrition entries
 - CSV export of nutrition history
@@ -23,11 +24,11 @@ Browser
   └─ Nyx AI (React/Vite)
        └─ Janus Gate (Flask API)
             ├─ Firestore: users and nutrition entries
-            ├─ Cloud KMS: OpenAI key encryption
-            └─ OpenAI API: structured meal analysis
+            ├─ Cloud KMS: provider-key encryption
+            └─ OpenAI or Mistral AI: structured meal analysis
 ```
 
-Nyx AI never sends meal data directly to OpenAI. It communicates with Janus Gate over HTTPS and uses a bearer JWT for authenticated requests.
+Nyx AI never sends meal data or provider credentials directly from the browser to a model vendor. It communicates with Janus Gate over HTTPS and uses a bearer JWT for authenticated requests.
 
 ## Tech stack
 
@@ -67,7 +68,7 @@ The API base URL is defined in [`src/config/api.js`](src/config/api.js). Change 
 | `npm run test:ui` | Open the Vitest UI |
 | `npm run test:coverage` | Run Vitest with coverage |
 
-The Vitest tooling is configured, but this repository does not currently contain test files.
+Vitest and Testing Library cover nutrition utilities, AI settings and credential requests, provider selection, model-backed error handling, and recommendation behavior.
 
 ## Application routes
 
@@ -77,7 +78,7 @@ The Vitest tooling is configured, but this repository does not currently contain
 | `/data` | Nutrition-entry management and CSV export |
 | `/charts` | Seven-day calorie and protein trends |
 | `/recommendations` | Protein-focused meal planning for the rest of today |
-| `/account` | OpenAI key status, account details, and account deletion |
+| `/account` | AI provider/model profile, provider API keys, account details, and account deletion |
 
 All application routes use the authenticated layout. Visitors without a valid session see the registration and sign-in screen.
 
@@ -86,12 +87,15 @@ All application routes use the authenticated layout. Visitors without a valid se
 Nyx AI uses these API groups:
 
 - `/api/auth/*` for registration, login, session validation, and account deletion
-- `/api/user/openai-key` for OpenAI key status, replacement, and removal
+- `/api/user/ai-settings` for the selected provider/model and available provider metadata
+- `/api/user/ai-credentials/<provider>` for provider key status, replacement, and removal
 - `/api/nutrition/analyze` for structured meal estimates
 - `/api/nutrition/recommend` for structured rest-of-day meal recommendations
 - `/api/nutrition/entries` for nutrition-entry CRUD
 
-The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. A supplied OpenAI key exists in component state only while it is being submitted. Janus Gate verifies and encrypts the key; Nyx AI can retrieve only safe status metadata.
+The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. Supplied OpenAI and Mistral keys exist only in their individual component state while being submitted. Janus Gate verifies and encrypts each key; Nyx AI can retrieve only safe status metadata such as whether a key is configured and its last four characters.
+
+Both keys can remain configured independently. Janus Gate resolves the saved provider and model when processing meal analysis and recommendation requests, so provider choice and credentials are never added to nutrition request bodies.
 
 Nutrition values are estimates. Analysis results are not persisted until the user selects **Log meal**.
 
@@ -135,4 +139,4 @@ The workflow expects a `GCP_SA_KEY` GitHub Actions secret with permission to bui
 
 ## Related project
 
-- [Janus Gate](https://github.com/DonalGeraghty/Janus-Gate) — Flask API for authentication, encrypted OpenAI credentials, and nutrition data
+- [Janus Gate](https://github.com/DonalGeraghty/Janus-Gate) — Flask API for authentication, encrypted AI-provider credentials, model routing, and nutrition data

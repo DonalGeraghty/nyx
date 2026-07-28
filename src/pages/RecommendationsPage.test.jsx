@@ -114,4 +114,33 @@ describe('RecommendationsPage', () => {
     await screen.findByText('820 kcal')
     expect(screen.getByRole('button', { name: 'Recommend meals' })).toBeDisabled()
   })
+
+  it('uses provider metadata for credential errors and links to Account', async () => {
+    recommendMeals.mockRejectedValueOnce({
+      code: 'provider_key_required',
+      provider: { id: 'mistral', name: 'Mistral AI' },
+    })
+    render(
+      <MemoryRouter>
+        <RecommendationsPage />
+      </MemoryRouter>,
+    )
+
+    await screen.findByText('820 kcal')
+    fireEvent.change(screen.getByLabelText('Daily calorie target'), {
+      target: { value: '1800' },
+    })
+    fireEvent.change(screen.getByLabelText(/Daily protein target/), {
+      target: { value: '140' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Recommend meals' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Add an API key for Mistral AI in Account before requesting recommendations.'
+    )
+    expect(screen.getByRole('link', { name: 'Open Account' })).toHaveAttribute(
+      'href',
+      '/account'
+    )
+  })
 })

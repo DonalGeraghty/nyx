@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import OpenAIKeySettings from '../components/OpenAIKeySettings'
+import AISettings from '../components/AISettings'
 import { useAuth } from '../context/AuthContext'
 
 function AccountPage() {
@@ -47,7 +47,7 @@ function AccountPage() {
           <p className="account-demo">This is a local dummy account. No account data is stored on the server.</p>
         )}
 
-        <OpenAIKeySettings />
+        <AISettings />
 
         {!user?.isDemo && (
           <section className="account-danger" aria-labelledby="danger-heading">

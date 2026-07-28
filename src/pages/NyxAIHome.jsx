@@ -3,22 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import Lightfall from '../components/Lightfall'
 import { useAuth } from '../context/AuthContext'
 import { analyzeMeal, logMeal } from '../services/nutrition'
+import { aiRequestError } from '../utils/aiErrors'
 
 const LIGHTFALL_COLORS = ['#ffffff', '#b8b8b8', '#6f6f6f']
-
-function nutritionError(error) {
-  if (error.code === 'openai_key_required') {
-    return 'Add your OpenAI API key in Account before analyzing food.'
-  }
-  if (error.code === 'openai_key_invalid') {
-    return 'Your OpenAI API key is no longer valid. Replace it in Account.'
-  }
-  if (error.code === 'credential_service_unavailable') {
-    return 'Secure key storage is temporarily unavailable. Try again later.'
-  }
-  if (error.status === 429) return 'OpenAI is temporarily rate limited. Try again shortly.'
-  return error.message || 'Could not analyze that meal.'
-}
 
 function NyxAIHome() {
   const navigate = useNavigate()
@@ -28,6 +15,7 @@ function NyxAIHome() {
   const [analysis, setAnalysis] = useState(null)
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
+  const [showAISettingsLink, setShowAISettingsLink] = useState(false)
   const [notice, setNotice] = useState('')
   const [logged, setLogged] = useState(false)
 
@@ -45,6 +33,7 @@ function NyxAIHome() {
 
     setBusy('analyze')
     setError('')
+    setShowAISettingsLink(false)
     setNotice('')
     setAnalysis(null)
     setLogged(false)
@@ -54,7 +43,15 @@ function NyxAIHome() {
       setSourceMessage(submittedMessage)
       setMessage('')
     } catch (requestError) {
-      if (!handleUnauthorized(requestError)) setError(nutritionError(requestError))
+      if (!handleUnauthorized(requestError)) {
+        const errorDetails = aiRequestError(
+          requestError,
+          'analyzing food',
+          'Could not analyze that meal.'
+        )
+        setError(errorDetails.message)
+        setShowAISettingsLink(errorDetails.showAccountLink)
+      }
     } finally {
       setBusy('')
     }
@@ -64,6 +61,7 @@ function NyxAIHome() {
     if (!analysis?.items?.length || logged) return
     setBusy('log')
     setError('')
+    setShowAISettingsLink(false)
     setNotice('')
     try {
       await logMeal(analysis.items, sourceMessage)
@@ -124,7 +122,7 @@ function NyxAIHome() {
         {error && (
           <div className="message-error" role="alert">
             <p>{error}</p>
-            {(error.includes('API key') || error.includes('key storage')) && (
+            {showAISettingsLink && (
               <Link to="/account">Open Account</Link>
             )}
           </div>
