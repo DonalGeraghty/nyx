@@ -9,6 +9,8 @@ import {
   useNavigate,
 } from 'react-router-dom'
 import Dock from './components/Dock'
+import OfflineSyncManager from './components/OfflineSyncManager'
+import PWAStatus from './components/PWAStatus'
 import AccountPage from './pages/AccountPage'
 import DataPage from './pages/DataPage'
 import LoginSplash from './pages/LoginSplash'
@@ -55,6 +57,7 @@ function ProtectedLayout() {
 
   return (
     <div className="app">
+      <OfflineSyncManager />
       <AppDock />
       <Outlet />
     </div>
@@ -94,6 +97,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <PWAStatus />
         <AppRoutes />
       </Router>
     </AuthProvider>

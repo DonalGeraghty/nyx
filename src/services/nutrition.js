@@ -1,4 +1,9 @@
 import { API_ENDPOINTS, authFetch } from '../config/api'
+import {
+  cacheNutritionEntries,
+  deleteCachedNutritionEntry,
+  upsertCachedNutritionEntry,
+} from './offlineStore'
 
 export class NutritionApiError extends Error {
   constructor(message, status, code, metadata = {}) {
@@ -37,6 +42,11 @@ export async function analyzeMeal(message) {
   return data.analysis
 }
 
+export function isNetworkError(error) {
+  return error instanceof TypeError
+    || (!error?.status && error?.name !== 'AbortError')
+}
+
 export async function recommendMeals(context) {
   const data = await nutritionRequest(API_ENDPOINTS.NUTRITION_RECOMMEND, {
     method: 'POST',
@@ -46,15 +56,28 @@ export async function recommendMeals(context) {
   return data.recommendation
 }
 
-export async function logMeal(items, sourceMessage) {
+export async function logMeal(
+  items,
+  sourceMessage,
+  accountId,
+  { clientRequestId = null, eatenAt = new Date().toISOString() } = {}
+) {
   return createMealEntry({
     items,
     sourceMessage,
-    eatenAt: new Date().toISOString(),
+    eatenAt,
+    clientRequestId,
+    accountId,
   })
 }
 
-export async function createMealEntry({ items, sourceMessage = null, eatenAt }) {
+export async function createMealEntry({
+  items,
+  sourceMessage = null,
+  eatenAt,
+  clientRequestId = null,
+  accountId = null,
+}) {
   const data = await nutritionRequest(API_ENDPOINTS.NUTRITION_ENTRIES, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -62,12 +85,17 @@ export async function createMealEntry({ items, sourceMessage = null, eatenAt }) 
       items,
       source_message: sourceMessage,
       eaten_at: eatenAt,
+      client_request_id: clientRequestId,
     }),
   })
+  await upsertCachedNutritionEntry(accountId, data.entry)
   return data.entry
 }
 
-export async function updateMealEntry(entryId, { items, sourceMessage = null, eatenAt }) {
+export async function updateMealEntry(
+  entryId,
+  { items, sourceMessage = null, eatenAt, accountId = null }
+) {
   const data = await nutritionRequest(
     `${API_ENDPOINTS.NUTRITION_ENTRIES}/${encodeURIComponent(entryId)}`,
     {
@@ -80,28 +108,39 @@ export async function updateMealEntry(entryId, { items, sourceMessage = null, ea
       }),
     }
   )
+  await upsertCachedNutritionEntry(accountId, data.entry)
   return data.entry
 }
 
-export async function listMeals(limit = 100) {
+export async function listMeals(limit = 100, { accountId = null } = {}) {
   const data = await nutritionRequest(
     `${API_ENDPOINTS.NUTRITION_ENTRIES}?limit=${limit}`,
     { method: 'GET' }
   )
-  return data.entries || []
+  const entries = data.entries || []
+  await cacheNutritionEntries(accountId, entries)
+  return entries
 }
 
-export async function listAllMeals({ signal } = {}) {
+export async function listAllMeals({ signal, accountId = null } = {}) {
   const options = { method: 'GET' }
   if (signal) options.signal = signal
   const data = await nutritionRequest(
     `${API_ENDPOINTS.NUTRITION_ENTRIES}?all=true`,
     options
   )
-  return data.entries || []
+  const entries = data.entries || []
+  await cacheNutritionEntries(accountId, entries, { allComplete: true })
+  return entries
 }
 
-export async function listMealsForPeriod({ start, end, limit = 500, signal } = {}) {
+export async function listMealsForPeriod({
+  start,
+  end,
+  limit = 500,
+  signal,
+  accountId = null,
+} = {}) {
   if (!(start instanceof Date) || Number.isNaN(start.getTime())) {
     throw new Error('A valid period start is required')
   }
@@ -120,6 +159,10 @@ export async function listMealsForPeriod({ start, end, limit = 500, signal } = {
     `${API_ENDPOINTS.NUTRITION_ENTRIES}?${search.toString()}`,
     options
   )
+  await cacheNutritionEntries(accountId, data.entries || [], {
+    rangeStart: start,
+    rangeEnd: end,
+  })
   return {
     entries: data.entries || [],
     pagination: data.pagination || {
@@ -131,10 +174,11 @@ export async function listMealsForPeriod({ start, end, limit = 500, signal } = {
   }
 }
 
-export async function deleteMeal(entryId) {
+export async function deleteMeal(entryId, accountId = null) {
   await nutritionRequest(`${API_ENDPOINTS.NUTRITION_ENTRIES}/${encodeURIComponent(entryId)}`, {
     method: 'DELETE',
   })
+  await deleteCachedNutritionEntry(accountId, entryId)
 }
 
 export function toDisplayEntries(entries) {

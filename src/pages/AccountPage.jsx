@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AISettings from '../components/AISettings'
+import PushSettings from '../components/PushSettings'
+import PWASettings from '../components/PWASettings'
 import { useAuth } from '../context/AuthContext'
 
 function AccountPage() {
@@ -48,6 +50,8 @@ function AccountPage() {
         )}
 
         <AISettings />
+        <PWASettings />
+        {!user?.isDemo && <PushSettings />}
 
         {!user?.isDemo && (
           <section className="account-danger" aria-labelledby="danger-heading">

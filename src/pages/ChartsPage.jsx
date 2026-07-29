@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { demoFoodEntries } from '../data/foodEntries'
 import { listMeals, toDisplayEntries } from '../services/nutrition'
+import { getCachedNutritionEntries } from '../services/offlineStore'
 import { aggregateRecentDays, filterRecentEntries } from '../utils/nutrition'
 
 const tooltipStyle = {
@@ -26,16 +27,30 @@ function ChartsPage() {
   const [entries, setEntries] = useState(user?.isDemo ? demoFoodEntries : [])
   const [loading, setLoading] = useState(!user?.isDemo)
   const [error, setError] = useState('')
+  const [offlineSnapshotAt, setOfflineSnapshotAt] = useState(null)
 
   useEffect(() => {
     if (user?.isDemo) return undefined
     let active = true
-    listMeals()
+    listMeals(100, { accountId: user?.accountId })
       .then((rows) => {
         if (active) setEntries(toDisplayEntries(rows))
       })
-      .catch((requestError) => {
-        if (active) setError(requestError.message || 'Could not load nutrition data.')
+      .catch(async (requestError) => {
+        if (!active) return
+        if (requestError instanceof TypeError && user?.accountId) {
+          const end = new Date()
+          end.setDate(end.getDate() + 1)
+          const start = new Date(end)
+          start.setDate(start.getDate() - 8)
+          const cached = await getCachedNutritionEntries(user.accountId, { start, end })
+          if (active) {
+            setEntries(toDisplayEntries(cached.entries))
+            setOfflineSnapshotAt(cached.lastSyncedAt || 'never')
+          }
+        } else {
+          setError(requestError.message || 'Could not load nutrition data.')
+        }
       })
       .finally(() => {
         if (active) setLoading(false)
@@ -43,7 +58,7 @@ function ChartsPage() {
     return () => {
       active = false
     }
-  }, [user?.isDemo])
+  }, [user?.accountId, user?.isDemo])
   const recentEntries = filterRecentEntries(entries)
   const dailyData = aggregateRecentDays(entries)
   const totalCalories = dailyData.reduce((total, day) => total + day.calories, 0)
@@ -68,6 +83,13 @@ function ChartsPage() {
         <header>
           <h1>Charts</h1>
           <p>Nutrition trends from the last seven days.</p>
+          {offlineSnapshotAt && (
+            <p className="data-period-warning" role="status">
+              {offlineSnapshotAt === 'never'
+                ? 'You are offline and no chart snapshot is saved on this device.'
+                : `Offline snapshot from ${new Date(offlineSnapshotAt).toLocaleString()}.`}
+            </p>
+          )}
         </header>
 
         {loading ? (

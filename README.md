@@ -16,7 +16,9 @@ The browser application is backed by [Janus Gate](https://github.com/DonalGeragh
 - Seven-day period navigation and full-history CSV export
 - Seven-day calorie and protein charts
 - AI meal recommendations based on today's nutrition and personal targets
-- Responsive navigation and installable-app metadata
+- Installable PWA shell with explicit update prompts and offline navigation
+- Account-partitioned offline history, raw meal drafts, and reviewed-entry sync
+- Opt-in daily Web Push reminders with local-time scheduling
 
 ## Architecture
 
@@ -39,6 +41,8 @@ Nyx AI never sends meal data or provider credentials directly from the browser t
 - Recharts
 - Motion, Three.js, and OGL
 - Vitest and Testing Library tooling
+- Workbox through `vite-plugin-pwa`
+- IndexedDB through `idb`
 
 ## Local development
 
@@ -93,6 +97,7 @@ Nyx AI uses these API groups:
 - `/api/nutrition/analyze` for structured meal estimates
 - `/api/nutrition/recommend` for structured rest-of-day meal recommendations
 - `/api/nutrition/entries` for nutrition-entry CRUD
+- `/api/user/push-settings` and `/api/user/push-subscriptions` for reminders
 
 The Data page requests only its selected Monday-to-Sunday period. Local week
 boundaries are converted to timezone-aware UTC instants before being sent as
@@ -106,11 +111,34 @@ All three keys can remain configured independently. Janus Gate resolves the save
 
 Nutrition values are estimates. Analysis results are not persisted until the user selects **Log meal**.
 
-## Installable app metadata
+## PWA and offline behavior
 
-Static application assets live in `public/`. The web-app manifest is [`public/manifest.webmanifest`](public/manifest.webmanifest), with standard, Apple touch, and Android maskable icons under `public/icons/`.
+The Vite PWA plugin generates the manifest and builds the custom service worker
+from [`src/service-worker.js`](src/service-worker.js). Standard, Apple touch,
+and Android maskable icons live under `public/icons/`.
 
-The manifest enables standalone home-screen presentation on supported devices. The application does not currently include a service worker or offline mode.
+The service worker precaches only the application shell and static assets.
+Authenticated Janus Gate requests are always network-only: bearer tokens, API
+keys, AI responses, and nutrition API responses are never written to Cache
+Storage. Updates wait for the user to select **Update now**, protecting form
+state from an unexpected refresh.
+
+Private offline records use an IndexedDB database partitioned by Janus Gate's
+immutable `account_id`. Successful history reads populate the local snapshot.
+Raw meal descriptions entered without a connection are drafts and never call
+an AI provider automatically. Only reviewed structured entries can enter the
+outbox; each carries a stable `client_request_id` so retries cannot create a
+duplicate server record. Sign-out and account deletion clear that account's
+local cache, drafts, and outbox.
+
+The first complete-history CSV request also marks the local history complete,
+allowing later offline exports. If this device has only weekly snapshots, the
+app asks the user to connect before claiming an all-history export.
+
+Web Push reminders are opt-in from Account. Notification permission is
+requested only after the user selects **Enable reminders**. Payloads are
+generic and contain no nutrition details. On iPhone and iPad, Web Push requires
+the site to be installed to the Home Screen.
 
 ## Production deployment
 
@@ -122,6 +150,9 @@ The GitHub Actions workflow in [`.github/workflows/deploy-gcp.yml`](.github/work
 4. Deploys the image to Google Cloud Run in `europe-west1`.
 
 The workflow expects a `GCP_SA_KEY` GitHub Actions secret with permission to build, push, and deploy the service.
+
+Nginx serves the service worker, manifest, and HTML with revalidation/no-cache
+headers while keeping fingerprinted build assets immutable.
 
 ## Project structure
 

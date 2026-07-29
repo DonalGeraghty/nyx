@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   analyzeMeal,
+  createMealEntry,
   listAllMeals,
   listMealsForPeriod,
   NutritionApiError,
@@ -144,6 +145,31 @@ describe('nutrition service errors', () => {
         method: 'GET',
         signal: controller.signal,
       }
+    )
+  })
+
+  it('sends a stable client request ID for retry-safe creates', async () => {
+    authFetchMock.mockResolvedValue(response({
+      entry: { id: 'request-entry' },
+    }, { status: 201 }))
+
+    await createMealEntry({
+      items: [{ food: 'Eggs', portion: '2', calories: 180, protein_g: 13 }],
+      eatenAt: '2026-07-29T12:00:00.000Z',
+      clientRequestId: '149f4f32-8440-42fe-b980-060cabf15c9c',
+    })
+
+    expect(authFetchMock).toHaveBeenCalledWith(
+      '/api/nutrition/entries',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          items: [{ food: 'Eggs', portion: '2', calories: 180, protein_g: 13 }],
+          source_message: null,
+          eaten_at: '2026-07-29T12:00:00.000Z',
+          client_request_id: '149f4f32-8440-42fe-b980-060cabf15c9c',
+        }),
+      })
     )
   })
 })
