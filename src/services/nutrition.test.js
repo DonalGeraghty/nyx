@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   analyzeMeal,
+  listAllMeals,
   listMealsForPeriod,
   NutritionApiError,
   recommendMeals,
@@ -119,5 +120,30 @@ describe('nutrition service errors', () => {
     })
     expect(result.entries).toEqual([{ id: 'entry-1' }])
     expect(result.pagination.truncated).toBe(false)
+  })
+
+  it('requests the complete nutrition history for export', async () => {
+    const controller = new AbortController()
+    authFetchMock.mockResolvedValue(response({
+      entries: [{ id: 'newest' }, { id: 'oldest' }],
+      pagination: {
+        start: null,
+        end: null,
+        limit: null,
+        truncated: false,
+      },
+    }))
+
+    await expect(listAllMeals({ signal: controller.signal })).resolves.toEqual([
+      { id: 'newest' },
+      { id: 'oldest' },
+    ])
+    expect(authFetchMock).toHaveBeenCalledWith(
+      '/api/nutrition/entries?all=true',
+      {
+        method: 'GET',
+        signal: controller.signal,
+      }
+    )
   })
 })

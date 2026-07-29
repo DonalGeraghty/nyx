@@ -91,6 +91,16 @@ export async function listMeals(limit = 100) {
   return data.entries || []
 }
 
+export async function listAllMeals({ signal } = {}) {
+  const options = { method: 'GET' }
+  if (signal) options.signal = signal
+  const data = await nutritionRequest(
+    `${API_ENDPOINTS.NUTRITION_ENTRIES}?all=true`,
+    options
+  )
+  return data.entries || []
+}
+
 export async function listMealsForPeriod({ start, end, limit = 500, signal } = {}) {
   if (!(start instanceof Date) || Number.isNaN(start.getTime())) {
     throw new Error('A valid period start is required')

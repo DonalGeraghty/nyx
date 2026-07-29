@@ -6,12 +6,16 @@ import DataPage from './DataPage'
 import {
   createMealEntry,
   deleteMeal,
+  listAllMeals,
   listMealsForPeriod,
   updateMealEntry,
 } from '../services/nutrition'
+import { foodEntriesToCsv } from '../utils/csv'
 import { localDateKey } from '../utils/nutrition'
 
 const { logoutMock } = vi.hoisted(() => ({ logoutMock: vi.fn() }))
+const originalCreateObjectURL = URL.createObjectURL
+const originalRevokeObjectURL = URL.revokeObjectURL
 
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({
@@ -26,10 +30,15 @@ vi.mock('../services/nutrition', async () => {
     ...actual,
     createMealEntry: vi.fn(),
     deleteMeal: vi.fn(),
+    listAllMeals: vi.fn(),
     listMealsForPeriod: vi.fn(),
     updateMealEntry: vi.fn(),
   }
 })
+
+vi.mock('../utils/csv', () => ({
+  foodEntriesToCsv: vi.fn(() => 'csv-content'),
+}))
 
 function apiEntry({
   id,
@@ -65,6 +74,7 @@ describe('DataPage weekly history', () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     vi.setSystemTime(new Date(2026, 6, 29, 12, 0))
     vi.clearAllMocks()
+    listAllMeals.mockResolvedValue([])
     listMealsForPeriod.mockResolvedValue(periodResponse())
     createMealEntry.mockResolvedValue({})
     updateMealEntry.mockResolvedValue({})
@@ -73,6 +83,11 @@ describe('DataPage weekly history', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.restoreAllMocks()
+    if (originalCreateObjectURL) URL.createObjectURL = originalCreateObjectURL
+    else delete URL.createObjectURL
+    if (originalRevokeObjectURL) URL.revokeObjectURL = originalRevokeObjectURL
+    else delete URL.revokeObjectURL
   })
 
   it('requests one local week and groups entries under local day headings', async () => {
@@ -167,5 +182,58 @@ describe('DataPage weekly history', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'This period has more than 500 entries'
     )
+  })
+
+  it('exports the complete history even when the selected week is empty', async () => {
+    listAllMeals.mockResolvedValue([
+      apiEntry({
+        id: 'historical',
+        date: new Date(2026, 4, 10, 12, 0),
+        food: 'Historical meal',
+        calories: 600,
+        protein: 40,
+      }),
+      apiEntry({
+        id: 'oldest',
+        date: new Date(2025, 11, 1, 8, 0),
+        food: 'Oldest meal',
+        calories: 350,
+        protein: 20,
+      }),
+    ])
+
+    render(
+      <MemoryRouter initialEntries={['/data']}>
+        <DataPage />
+      </MemoryRouter>,
+    )
+    await screen.findByText('No entries in this period')
+
+    const originalCreateElement = document.createElement.bind(document)
+    let downloadLink
+    vi.spyOn(document, 'createElement').mockImplementation((tagName, options) => {
+      const element = originalCreateElement(tagName, options)
+      if (tagName === 'a') downloadLink = element
+      return element
+    })
+    const clickMock = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => {})
+    URL.createObjectURL = vi.fn(() => 'blob:nutrition-export')
+    URL.revokeObjectURL = vi.fn()
+
+    const exportButton = screen.getByRole('button', { name: 'Export all CSV' })
+    expect(exportButton).toBeEnabled()
+    fireEvent.click(exportButton)
+
+    await waitFor(() => expect(listAllMeals).toHaveBeenCalledOnce())
+    const exportedEntries = foodEntriesToCsv.mock.calls[0][0]
+    expect(exportedEntries.map((entry) => entry.food)).toEqual([
+      'Historical meal (1 serving)',
+      'Oldest meal (1 serving)',
+    ])
+    expect(downloadLink.download).toBe('nyxai-food-entries-all.csv')
+    expect(clickMock).toHaveBeenCalledOnce()
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:nutrition-export')
   })
 })

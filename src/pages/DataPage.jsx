@@ -8,6 +8,7 @@ import { demoFoodEntries } from '../data/foodEntries'
 import {
   createMealEntry,
   deleteMeal,
+  listAllMeals,
   listMealsForPeriod,
   toDisplayEntries,
   updateMealEntry,
@@ -43,6 +44,7 @@ function DataPage() {
   const current = period.key === currentPeriod.key
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState(false)
   const [truncated, setTruncated] = useState(false)
   const [deletingId, setDeletingId] = useState('')
   const [editor, setEditor] = useState(null)
@@ -187,18 +189,34 @@ function DataPage() {
     }
   }
 
-  const handleExport = () => {
-    const csv = foodEntriesToCsv(entries)
-    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
-    const downloadUrl = URL.createObjectURL(blob)
-    const link = document.createElement('a')
+  const handleExport = async () => {
+    setExporting(true)
+    setError('')
+    try {
+      const exportEntries = user?.isDemo
+        ? demoFoodEntries
+        : toDisplayEntries(await listAllMeals())
+      const csv = foodEntriesToCsv(exportEntries)
+      const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
+      const downloadUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
 
-    link.href = downloadUrl
-    link.download = `nyxai-food-entries-${period.key}.csv`
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(downloadUrl)
+      link.href = downloadUrl
+      link.download = 'nyxai-food-entries-all.csv'
+      document.body.appendChild(link)
+      try {
+        link.click()
+      } finally {
+        link.remove()
+        URL.revokeObjectURL(downloadUrl)
+      }
+    } catch (requestError) {
+      if (!handleUnauthorized(requestError)) {
+        setError(requestError.message || 'Could not export nutrition history.')
+      }
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -214,9 +232,9 @@ function DataPage() {
               type="button"
               className="data-export-button"
               onClick={handleExport}
-              disabled={loading || !entries.length}
+              disabled={exporting}
             >
-              Export week CSV
+              {exporting ? 'Exporting…' : 'Export all CSV'}
             </button>
             {!user?.isDemo && (
               <button

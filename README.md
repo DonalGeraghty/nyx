@@ -13,7 +13,7 @@ The browser application is backed by [Janus Gate](https://github.com/DonalGeragh
 - AI-assisted meal analysis with structured, reviewable results
 - Manual creation, editing, and deletion of nutrition entries
 - Monday-to-Sunday nutrition history grouped by local day
-- Seven-day period navigation and CSV export
+- Seven-day period navigation and full-history CSV export
 - Seven-day calorie and protein charts
 - AI meal recommendations based on today's nutrition and personal targets
 - Responsive navigation and installable-app metadata
@@ -76,7 +76,7 @@ Vitest and Testing Library cover nutrition utilities, AI settings and credential
 | Route | Purpose |
 | --- | --- |
 | `/` | Meal analysis and reviewed logging |
-| `/data` | Week-paginated, day-grouped nutrition-entry management and CSV export |
+| `/data` | Week-paginated, day-grouped nutrition-entry management and full-history CSV export |
 | `/charts` | Seven-day calorie and protein trends |
 | `/recommendations` | Protein-focused meal planning for the rest of today |
 | `/account` | AI provider/model profile, provider API keys, account details, and account deletion |
@@ -96,7 +96,9 @@ Nyx AI uses these API groups:
 
 The Data page requests only its selected Monday-to-Sunday period. Local week
 boundaries are converted to timezone-aware UTC instants before being sent as
-the entry list's inclusive `start` and exclusive `end` parameters.
+the entry list's inclusive `start` and exclusive `end` parameters. CSV export
+uses a separate `all=true` request so the download contains the complete
+nutrition history without changing the selected weekly view.
 
 The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. Supplied OpenAI, Mistral AI, and Anthropic keys exist only in their individual component state while being submitted. Janus Gate verifies and encrypts each key; Nyx AI can retrieve only safe status metadata such as whether a key is configured and its last four characters.
 
