@@ -67,7 +67,10 @@ export async function saveAIProviderCredential(provider, apiKey) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ api_key: apiKey }),
   })
-  return credentialFromResponse(data)
+  return {
+    credential: credentialFromResponse(data),
+    warning: data.warning || null,
+  }
 }
 
 export async function deleteAIProviderCredential(provider) {

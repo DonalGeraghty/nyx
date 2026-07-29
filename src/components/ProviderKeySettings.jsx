@@ -27,6 +27,12 @@ function credentialErrorMessage(error, providerName) {
   if (error.code === 'provider_key_invalid') {
     return `${providerName} rejected this key. Check that it is active and has API access.`
   }
+  if (error.code === 'provider_access_denied') {
+    return `${providerName} accepted the key, but it does not have the required API access.`
+  }
+  if (error.code === 'provider_billing_required') {
+    return `${providerName} accepted the key, but the account needs API credit or a higher spending limit.`
+  }
   if (error.code === 'provider_rate_limited') {
     return `${providerName} could not verify the key because it is currently rate limited.`
   }
@@ -70,10 +76,14 @@ function ProviderKeySettings({
 
     setAction('save')
     try {
-      const credential = await saveAIProviderCredential(providerId, submittedKey)
+      const result = await saveAIProviderCredential(providerId, submittedKey)
+      const credential = result?.credential || result
       onCredentialChange(providerId, credential)
       setApiKey('')
-      setNotice(`Your ${providerName} API key is configured.`)
+      setNotice(
+        result?.warning?.message
+        || `Your ${providerName} API key is configured. API credit will be checked when you use AI.`
+      )
     } catch (requestError) {
       if (!onUnauthorized(requestError)) {
         setError(credentialErrorMessage(requestError, providerName))
@@ -139,7 +149,7 @@ function ProviderKeySettings({
       </div>
 
       <p className="account-section-copy">
-        Your key is verified by {providerName}, encrypted by Janus Gate, and never shown again.
+        Your key is checked with {providerName}, encrypted by Janus Gate, and never shown again.
         {presentation && (
           <>
             {' '}
@@ -167,7 +177,7 @@ function ProviderKeySettings({
           disabled={busy}
         />
         <button type="submit" disabled={busy || !apiKey.trim()}>
-          {action === 'save' ? 'Verifying…' : configured ? 'Replace key' : 'Save key'}
+          {action === 'save' ? 'Checking key…' : configured ? 'Replace key' : 'Save key'}
         </button>
       </form>
 

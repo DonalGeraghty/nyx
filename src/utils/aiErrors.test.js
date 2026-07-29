@@ -18,6 +18,16 @@ describe('aiRequestError', () => {
       'Mistral AI is temporarily unavailable. Try again later.',
       false,
     ],
+    [
+      'provider_access_denied',
+      'The API key for Mistral AI does not have the required API access.',
+      true,
+    ],
+    [
+      'provider_billing_required',
+      'The API key for Mistral AI is valid, but the account needs API credit or a higher spending limit.',
+      false,
+    ],
   ])('maps %s with provider metadata', (code, message, showAccountLink) => {
     expect(aiRequestError(
       { code, provider: { id: 'mistral', name: 'Mistral AI' } },

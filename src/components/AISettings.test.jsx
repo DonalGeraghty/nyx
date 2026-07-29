@@ -87,8 +87,11 @@ describe('AISettings', () => {
     vi.clearAllMocks()
     getAISettings.mockResolvedValue(providerSettings())
     saveAIProviderCredential.mockResolvedValue({
-      configured: true,
-      last_four: '9876',
+      credential: {
+        configured: true,
+        last_four: '9876',
+      },
+      warning: null,
     })
     saveAISelection.mockImplementation(async (selection) => selection)
     deleteAIProviderCredential.mockResolvedValue(undefined)
@@ -204,6 +207,35 @@ describe('AISettings', () => {
       'Claude (Anthropic) rejected this key. Check that it is active and has API access.'
     )
     expect(deleteAIProviderCredential).not.toHaveBeenCalled()
+  })
+
+  it('configures a key and displays a non-fatal billing warning', async () => {
+    saveAIProviderCredential.mockResolvedValueOnce({
+      credential: {
+        configured: true,
+        last_four: '2468',
+      },
+      warning: {
+        code: 'provider_billing_required',
+        message: 'The key was saved, but Claude API billing must be enabled.',
+      },
+    })
+    renderSettings()
+
+    const claudePanel = (await screen.findByRole('heading', {
+      name: 'Claude (Anthropic) API key',
+    })).closest('section')
+    fireEvent.change(
+      within(claudePanel).getByLabelText('Enter Claude (Anthropic) API key'),
+      { target: { value: 'sk-ant-valid-no-credit' } }
+    )
+    fireEvent.click(within(claudePanel).getByRole('button', { name: 'Save key' }))
+
+    expect(await within(claudePanel).findByRole('status')).toHaveTextContent(
+      'The key was saved, but Claude API billing must be enabled.'
+    )
+    expect(within(claudePanel).getByText('Configured ••••2468')).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: /Claude \(Anthropic\)/ })).toBeEnabled()
   })
 
   it('removes one provider key without changing the other credential', async () => {

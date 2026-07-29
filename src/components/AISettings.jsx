@@ -31,6 +31,12 @@ function settingsErrorMessage(error) {
   if (error.code === 'provider_key_invalid') {
     return 'That provider’s API key is no longer valid. Replace it below.'
   }
+  if (error.code === 'provider_access_denied') {
+    return 'That API key does not have the required provider access.'
+  }
+  if (error.code === 'provider_billing_required') {
+    return 'That provider account needs API credit or a higher spending limit.'
+  }
   if (error.code === 'provider_unavailable') {
     return 'That AI provider is temporarily unavailable. Try again later.'
   }

@@ -28,6 +28,18 @@ export function aiRequestError(error, purpose, fallbackMessage) {
       showAccountLink: true,
     }
   }
+  if (error?.code === 'provider_access_denied' || error?.code === 'openai_access_denied') {
+    return {
+      message: `The API key for ${providerPossessive} does not have the required API access.`,
+      showAccountLink: true,
+    }
+  }
+  if (error?.code === 'provider_billing_required' || error?.code === 'openai_billing_required') {
+    return {
+      message: `The API key for ${providerPossessive} is valid, but the account needs API credit or a higher spending limit.`,
+      showAccountLink: false,
+    }
+  }
   if (error?.code === 'provider_rate_limited' || error?.status === 429) {
     return {
       message: `${providerSubject} is temporarily rate limited. Try again shortly.`,

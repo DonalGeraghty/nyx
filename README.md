@@ -100,7 +100,7 @@ the entry list's inclusive `start` and exclusive `end` parameters. CSV export
 uses a separate `all=true` request so the download contains the complete
 nutrition history without changing the selected weekly view.
 
-The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. Supplied OpenAI, Mistral AI, and Anthropic keys exist only in their individual component state while being submitted. Janus Gate verifies and encrypts each key; Nyx AI can retrieve only safe status metadata such as whether a key is configured and its last four characters.
+The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. Supplied OpenAI, Mistral AI, and Anthropic keys exist only in their individual component state while being submitted. Janus Gate authenticates and encrypts each key without generating model output; Nyx AI can retrieve only safe status metadata such as whether a key is configured and its last four characters. Keys can be configured before provider credit is added, while billing and spend-limit errors are reported when an AI request is made.
 
 All three keys can remain configured independently. Janus Gate resolves the saved provider and model when processing meal analysis and recommendation requests, so provider choice and credentials are never added to nutrition request bodies.
 

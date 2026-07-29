@@ -73,8 +73,11 @@ describe('AI settings service', () => {
         last_four: '5678',
       })
       await expect(saveAIProviderCredential(providerId, 'secret-key')).resolves.toEqual({
-        configured: true,
-        last_four: '9012',
+        credential: {
+          configured: true,
+          last_four: '9012',
+        },
+        warning: null,
       })
       await deleteAIProviderCredential(providerId)
 
@@ -118,6 +121,22 @@ describe('AI settings service', () => {
       status: 422,
       provider,
       model: 'mistral-small-latest',
+    })
+  })
+
+  it('returns a non-fatal billing warning with the saved credential', async () => {
+    const warning = {
+      code: 'provider_billing_required',
+      message: 'The key was saved, but API credit is required.',
+    }
+    authFetchMock.mockResolvedValue(response({
+      credential: { configured: true, last_four: '1234' },
+      warning,
+    }))
+
+    await expect(saveAIProviderCredential('openai', 'secret-key')).resolves.toEqual({
+      credential: { configured: true, last_four: '1234' },
+      warning,
     })
   })
 })
