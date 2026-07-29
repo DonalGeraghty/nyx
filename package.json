@@ -16,6 +16,9 @@
   "author": "",
   "license": "ISC",
   "description": "NyxAI — React/Vite frontend named for Nyx, the Greek goddess of night.",
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "idb": "^8.0.3",
     "motion": "^12.42.2",

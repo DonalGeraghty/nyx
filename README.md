@@ -48,7 +48,7 @@ Nyx AI never sends meal data or provider credentials directly from the browser t
 
 ### Requirements
 
-- Node.js 18 or newer
+- Node.js 22 or newer (Node.js 24 LTS recommended)
 - npm
 
 Install dependencies and start Vite:
