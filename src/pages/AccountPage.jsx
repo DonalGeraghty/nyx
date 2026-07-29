@@ -33,8 +33,8 @@ function AccountPage() {
   }
 
   return (
-    <main className="account-page">
-      <div className="account-inner">
+    <main className="content-page account-page">
+      <div className="content-inner account-inner">
         <header className="account-header">
           <h1 className="account-title">Account</h1>
           <p className="account-email">{user?.email}</p>

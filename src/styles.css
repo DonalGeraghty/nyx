@@ -32,17 +32,14 @@ button, input, textarea, select { font: inherit; }
   border: 0;
 }
 
-.login-splash,
-.account-page {
+.login-splash {
   min-height: 100vh;
   display: grid;
   padding: 2rem;
 }
 
 .login-splash { place-content: center; }
-.account-page { align-content: start; justify-content: center; }
 .login-splash-inner { width: min(100%, 24rem); }
-.account-inner { width: min(100%, 52rem); }
 
 .login-splash-top { text-align: center; }
 .login-splash-brand { font-size: 3rem; }
@@ -572,7 +569,6 @@ button, input, textarea, select { font: inherit; }
 }
 
 @media (max-width: 36rem) {
-  .account-page { padding: 1rem; }
   .ai-provider-options { grid-template-columns: 1fr; }
   .data-page-heading,
   .entry-editor-heading,
