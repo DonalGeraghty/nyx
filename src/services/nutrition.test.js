@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { analyzeMeal, NutritionApiError, recommendMeals } from './nutrition'
+import {
+  analyzeMeal,
+  listMealsForPeriod,
+  NutritionApiError,
+  recommendMeals,
+} from './nutrition'
 
 const { authFetchMock } = vi.hoisted(() => ({ authFetchMock: vi.fn() }))
 
@@ -80,5 +85,39 @@ describe('nutrition service errors', () => {
     })
     expect(requestError.provider).toBeUndefined()
     expect(requestError.model).toBeUndefined()
+  })
+
+  it('requests one timezone-aware nutrition period', async () => {
+    const start = new Date('2026-07-26T23:00:00.000Z')
+    const end = new Date('2026-08-02T23:00:00.000Z')
+    const controller = new AbortController()
+    authFetchMock.mockResolvedValue(response({
+      entries: [{ id: 'entry-1' }],
+      pagination: {
+        start: start.toISOString(),
+        end: end.toISOString(),
+        limit: 500,
+        truncated: false,
+      },
+    }))
+
+    const result = await listMealsForPeriod({
+      start,
+      end,
+      signal: controller.signal,
+    })
+
+    const [path, options] = authFetchMock.mock.calls[0]
+    const requestUrl = new URL(path, 'https://nyxai.local')
+    expect(requestUrl.pathname).toBe('/api/nutrition/entries')
+    expect(requestUrl.searchParams.get('start')).toBe(start.toISOString())
+    expect(requestUrl.searchParams.get('end')).toBe(end.toISOString())
+    expect(requestUrl.searchParams.get('limit')).toBe('500')
+    expect(options).toEqual({
+      method: 'GET',
+      signal: controller.signal,
+    })
+    expect(result.entries).toEqual([{ id: 'entry-1' }])
+    expect(result.pagination.truncated).toBe(false)
   })
 })

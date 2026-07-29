@@ -91,6 +91,36 @@ export async function listMeals(limit = 100) {
   return data.entries || []
 }
 
+export async function listMealsForPeriod({ start, end, limit = 500, signal } = {}) {
+  if (!(start instanceof Date) || Number.isNaN(start.getTime())) {
+    throw new Error('A valid period start is required')
+  }
+  if (!(end instanceof Date) || Number.isNaN(end.getTime()) || end <= start) {
+    throw new Error('A valid period end is required')
+  }
+
+  const search = new URLSearchParams({
+    start: start.toISOString(),
+    end: end.toISOString(),
+    limit: String(limit),
+  })
+  const options = { method: 'GET' }
+  if (signal) options.signal = signal
+  const data = await nutritionRequest(
+    `${API_ENDPOINTS.NUTRITION_ENTRIES}?${search.toString()}`,
+    options
+  )
+  return {
+    entries: data.entries || [],
+    pagination: data.pagination || {
+      start: start.toISOString(),
+      end: end.toISOString(),
+      limit,
+      truncated: false,
+    },
+  }
+}
+
 export async function deleteMeal(entryId) {
   await nutritionRequest(`${API_ENDPOINTS.NUTRITION_ENTRIES}/${encodeURIComponent(entryId)}`, {
     method: 'DELETE',

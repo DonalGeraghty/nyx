@@ -1,60 +1,133 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import DayEntryGroup from '../components/DayEntryGroup'
 import NutritionEntryForm from '../components/NutritionEntryForm'
+import WeekNavigator, { formatWeekRange } from '../components/WeekNavigator'
 import { useAuth } from '../context/AuthContext'
 import { demoFoodEntries } from '../data/foodEntries'
 import {
   createMealEntry,
   deleteMeal,
-  listMeals,
+  listMealsForPeriod,
   toDisplayEntries,
   updateMealEntry,
 } from '../services/nutrition'
 import { foodEntriesToCsv } from '../utils/csv'
+import {
+  addLocalDays,
+  entryIsInPeriod,
+  groupEntriesByLocalDay,
+  localDateFromKey,
+  localDateKey,
+  totalNutrition,
+  weekPeriodFor,
+} from '../utils/nutrition'
 
-const formatDatetime = (datetime) => new Date(datetime).toLocaleString('en-IE', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-})
+function selectedPeriodFrom(searchParams, now = new Date()) {
+  const requestedDate = localDateFromKey(searchParams.get('week'))
+  const currentPeriod = weekPeriodFor(now)
+  if (!requestedDate) return currentPeriod
+  const requestedPeriod = weekPeriodFor(requestedDate)
+  return requestedPeriod.start > currentPeriod.start
+    ? currentPeriod
+    : requestedPeriod
+}
 
 function DataPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user, logout } = useAuth()
-  const [entries, setEntries] = useState(
-    user?.isDemo ? [...demoFoodEntries].sort((a, b) => new Date(b.datetime) - new Date(a.datetime)) : []
-  )
-  const [loading, setLoading] = useState(!user?.isDemo)
+  const now = new Date()
+  const currentPeriod = weekPeriodFor(now)
+  const period = selectedPeriodFrom(searchParams, now)
+  const current = period.key === currentPeriod.key
+  const [entries, setEntries] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [truncated, setTruncated] = useState(false)
   const [deletingId, setDeletingId] = useState('')
   const [editor, setEditor] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState(null)
+
+  const groups = useMemo(() => groupEntriesByLocalDay(entries), [entries])
+  const totals = useMemo(() => totalNutrition(entries), [entries])
+
+  const handleUnauthorized = (requestError) => {
+    if (requestError.status !== 401) return false
+    logout()
+    navigate('/', { replace: true })
+    return true
+  }
+
+  const showPeriod = (start) => {
+    const target = weekPeriodFor(start)
+    const next = new URLSearchParams(searchParams)
+    if (target.key === currentPeriod.key) next.delete('week')
+    else next.set('week', target.key)
+    setEditor(null)
+    setNotice(null)
+    setSearchParams(next)
+  }
 
   useEffect(() => {
-    if (user?.isDemo) return undefined
+    const weekText = searchParams.get('week')
+    const parsed = localDateFromKey(weekText)
+    if (!weekText) return
+    if (
+      !parsed
+      || localDateKey(weekPeriodFor(parsed).start) !== weekText
+      || weekPeriodFor(parsed).start > currentPeriod.start
+    ) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('week')
+      setSearchParams(next, { replace: true })
+    }
+  }, [currentPeriod.key, searchParams, setSearchParams])
+
+  useEffect(() => {
+    const controller = new AbortController()
     let active = true
-    listMeals()
-      .then((rows) => {
-        if (active) setEntries(toDisplayEntries(rows))
+    setLoading(true)
+    setError('')
+    setTruncated(false)
+    setNotice(null)
+
+    if (user?.isDemo) {
+      setEntries(
+        demoFoodEntries
+          .filter((entry) => entryIsInPeriod(entry, period))
+          .sort((left, right) => new Date(right.datetime) - new Date(left.datetime))
+      )
+      setLoading(false)
+      return () => controller.abort()
+    }
+
+    listMealsForPeriod({
+      start: period.start,
+      end: period.end,
+      signal: controller.signal,
+    })
+      .then(({ entries: rows, pagination }) => {
+        if (!active) return
+        setEntries(toDisplayEntries(rows))
+        setTruncated(Boolean(pagination?.truncated))
       })
       .catch((requestError) => {
-        if (!active) return
-        if (requestError.status === 401) {
-          logout()
-          navigate('/', { replace: true })
-          return
+        if (!active || requestError.name === 'AbortError') return
+        if (!handleUnauthorized(requestError)) {
+          setError(requestError.message || 'Could not load food entries.')
         }
-        setError(requestError.message || 'Could not load food entries.')
       })
       .finally(() => {
         if (active) setLoading(false)
       })
+
     return () => {
       active = false
+      controller.abort()
     }
-  }, [user?.isDemo, logout, navigate])
+  }, [period.key, user?.isDemo])
 
   const handleDelete = async (entry) => {
     const confirmed = window.confirm(`Delete “${entry.food}” from your nutrition log?`)
@@ -64,14 +137,13 @@ function DataPage() {
     setError('')
     try {
       await deleteMeal(entry.id)
-      setEntries((current) => current.filter((row) => row.id !== entry.id))
+      setEntries((currentEntries) => (
+        currentEntries.filter((row) => row.id !== entry.id)
+      ))
     } catch (requestError) {
-      if (requestError.status === 401) {
-        logout()
-        navigate('/', { replace: true })
-        return
+      if (!handleUnauthorized(requestError)) {
+        setError(requestError.message || 'Could not delete this food entry.')
       }
-      setError(requestError.message || 'Could not delete this food entry.')
     } finally {
       setDeletingId('')
     }
@@ -80,24 +152,36 @@ function DataPage() {
   const handleSave = async (payload) => {
     setSaving(true)
     setError('')
+    setNotice(null)
     try {
       const saved = editor?.id
         ? await updateMealEntry(editor.id, payload)
         : await createMealEntry(payload)
       const displayEntry = toDisplayEntries([saved])[0]
-      setEntries((current) => (
-        editor?.id
-          ? current.map((entry) => (entry.id === displayEntry.id ? displayEntry : entry))
-          : [displayEntry, ...current]
-      ))
+
+      if (entryIsInPeriod(displayEntry, period)) {
+        setEntries((currentEntries) => (
+          editor?.id
+            ? currentEntries.map((entry) => (
+              entry.id === displayEntry.id ? displayEntry : entry
+            ))
+            : [displayEntry, ...currentEntries]
+        ))
+      } else {
+        setEntries((currentEntries) => (
+          currentEntries.filter((entry) => entry.id !== displayEntry.id)
+        ))
+        const targetPeriod = weekPeriodFor(new Date(displayEntry.datetime))
+        setNotice({
+          message: `Entry saved in ${formatWeekRange(targetPeriod)}.`,
+          target: targetPeriod.start,
+        })
+      }
       setEditor(null)
     } catch (requestError) {
-      if (requestError.status === 401) {
-        logout()
-        navigate('/', { replace: true })
-        return
+      if (!handleUnauthorized(requestError)) {
+        setError(requestError.message || 'Could not save this food entry.')
       }
-      setError(requestError.message || 'Could not save this food entry.')
     } finally {
       setSaving(false)
     }
@@ -108,10 +192,9 @@ function DataPage() {
     const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
     const downloadUrl = URL.createObjectURL(blob)
     const link = document.createElement('a')
-    const exportDate = new Date().toISOString().slice(0, 10)
 
     link.href = downloadUrl
-    link.download = `nyxai-food-entries-${exportDate}.csv`
+    link.download = `nyxai-food-entries-${period.key}.csv`
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -124,7 +207,7 @@ function DataPage() {
         <div className="data-page-heading">
           <div>
             <h1>Data</h1>
-            <p>Recent food entries.</p>
+            <p>Nutrition history grouped by local day.</p>
           </div>
           <div className="data-heading-actions">
             <button
@@ -133,16 +216,53 @@ function DataPage() {
               onClick={handleExport}
               disabled={loading || !entries.length}
             >
-              Export CSV
+              Export week CSV
             </button>
             {!user?.isDemo && (
-              <button type="button" className="data-add-button" onClick={() => setEditor({ mode: 'add' })}>
-                Add row
+              <button
+                type="button"
+                className="data-add-button"
+                onClick={() => setEditor({ mode: 'add' })}
+              >
+                Add entry
               </button>
             )}
           </div>
         </div>
+
+        <WeekNavigator
+          period={period}
+          current={current}
+          loading={loading}
+          onPrevious={() => showPeriod(addLocalDays(period.start, -7))}
+          onNext={() => showPeriod(addLocalDays(period.start, 7))}
+          onCurrent={() => showPeriod(currentPeriod.start)}
+        />
+
+        <section className="data-period-summary" aria-label="Selected period totals">
+          <div><span>Entries</span><strong>{totals.meals}</strong></div>
+          <div>
+            <span>Calories</span>
+            <strong>{totals.calories.toLocaleString()} kcal</strong>
+          </div>
+          <div><span>Protein</span><strong>{totals.protein} g</strong></div>
+        </section>
+
         {error && <p className="content-error" role="alert">{error}</p>}
+        {notice && (
+          <div className="data-period-notice" role="status">
+            <span>{notice.message}</span>
+            <button type="button" onClick={() => showPeriod(notice.target)}>
+              View week
+            </button>
+          </div>
+        )}
+        {truncated && (
+          <p className="data-period-warning" role="alert">
+            This period has more than 500 entries. Only the newest 500 are shown.
+          </p>
+        )}
+
         {editor && (
           <NutritionEntryForm
             key={editor.id || 'new'}
@@ -152,68 +272,28 @@ function DataPage() {
             onSave={handleSave}
           />
         )}
-        <div className="data-table-wrap">
-          <table className="data-table">
-            <colgroup>
-              <col className="data-col-datetime" />
-              <col />
-              <col className="data-col-number" />
-              <col className="data-col-number" />
-              <col className="data-col-action" />
-            </colgroup>
-            <thead>
-              <tr>
-                <th scope="col">Datetime</th>
-                <th scope="col">Food</th>
-                <th scope="col">Calories</th>
-                <th scope="col">Protein</th>
-                <th scope="col">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
-                <tr key={entry.id || `${entry.datetime}-${entry.food}`}>
-                  <td>{formatDatetime(entry.datetime)}</td>
-                  <td><span className="data-food" title={entry.food}>{entry.food}</span></td>
-                  <td>{entry.calories}</td>
-                  <td>{entry.protein} g</td>
-                  <td>
-                    {user?.isDemo ? (
-                      <span className="data-action-unavailable">—</span>
-                    ) : (
-                      <div className="data-row-actions">
-                        <button
-                          type="button"
-                          className="data-edit-button"
-                          onClick={() => setEditor(entry)}
-                          disabled={Boolean(deletingId)}
-                          aria-label={`Edit ${entry.food}`}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          className="data-delete-button"
-                          onClick={() => handleDelete(entry)}
-                          disabled={deletingId === entry.id}
-                          aria-label={`Delete ${entry.food}`}
-                        >
-                          {deletingId === entry.id ? 'Deleting…' : 'Delete'}
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              {!loading && !entries.length && (
-                <tr><td colSpan="5">No food entries yet.</td></tr>
-              )}
-              {loading && (
-                <tr><td colSpan="5">Loading food entries…</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+
+        {loading ? (
+          <div className="data-period-state" role="status">Loading this week…</div>
+        ) : groups.length ? (
+          <div className="data-day-groups">
+            {groups.map((group) => (
+              <DayEntryGroup
+                key={group.key}
+                group={group}
+                demo={user?.isDemo}
+                deletingId={deletingId}
+                onEdit={setEditor}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="data-period-state">
+            <strong>No entries in this period</strong>
+            <span>Choose another week or add a nutrition entry.</span>
+          </div>
+        )}
       </div>
     </main>
   )

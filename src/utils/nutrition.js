@@ -12,6 +12,83 @@ export function filterRecentEntries(entries, dayCount = 7, now = new Date()) {
   })
 }
 
+export function addLocalDays(value, dayCount) {
+  const result = new Date(value)
+  result.setDate(result.getDate() + dayCount)
+  return result
+}
+
+export function startOfLocalWeek(value = new Date()) {
+  const result = new Date(value)
+  result.setHours(0, 0, 0, 0)
+  const day = result.getDay()
+  result.setDate(result.getDate() + (day === 0 ? -6 : 1 - day))
+  return result
+}
+
+export function localDateKey(value) {
+  const date = new Date(value)
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-')
+}
+
+export function localDateFromKey(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ''))
+  if (!match) return null
+  const [, yearText, monthText, dayText] = match
+  const date = new Date(Number(yearText), Number(monthText) - 1, Number(dayText))
+  if (
+    date.getFullYear() !== Number(yearText)
+    || date.getMonth() !== Number(monthText) - 1
+    || date.getDate() !== Number(dayText)
+  ) {
+    return null
+  }
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+export function weekPeriodFor(value = new Date()) {
+  const start = startOfLocalWeek(value)
+  return {
+    start,
+    end: addLocalDays(start, 7),
+    key: localDateKey(start),
+  }
+}
+
+export function entryIsInPeriod(entry, period) {
+  const datetime = new Date(entry.datetime)
+  return datetime >= period.start && datetime < period.end
+}
+
+export function groupEntriesByLocalDay(entries) {
+  const groupsByDate = new Map()
+  const sortedEntries = [...entries].sort(
+    (left, right) => new Date(right.datetime) - new Date(left.datetime)
+  )
+
+  sortedEntries.forEach((entry) => {
+    const key = localDateKey(entry.datetime)
+    if (!groupsByDate.has(key)) {
+      groupsByDate.set(key, {
+        key,
+        date: localDateFromKey(key),
+        entries: [],
+      })
+    }
+    groupsByDate.get(key).entries.push(entry)
+  })
+
+  return [...groupsByDate.values()].map((group) => ({
+    ...group,
+    totals: totalNutrition(group.entries),
+  }))
+}
+
 export function aggregateRecentDays(entries, dayCount = 7, now = new Date()) {
   const start = new Date(now)
   start.setHours(0, 0, 0, 0)
