@@ -8,8 +8,6 @@ export const API_ENDPOINTS = {
   AUTH_DELETE_ACCOUNT: '/api/auth/account',
   AI_SETTINGS: '/api/user/ai-settings',
   AI_CREDENTIALS: '/api/user/ai-credentials',
-  PUSH_SETTINGS: '/api/user/push-settings',
-  PUSH_SUBSCRIPTIONS: '/api/user/push-subscriptions',
   NUTRITION_ANALYZE: '/api/nutrition/analyze',
   NUTRITION_RECOMMEND: '/api/nutrition/recommend',
   NUTRITION_ENTRIES: '/api/nutrition/entries',

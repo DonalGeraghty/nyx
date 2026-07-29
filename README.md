@@ -18,7 +18,6 @@ The browser application is backed by [Janus Gate](https://github.com/DonalGeragh
 - AI meal recommendations based on today's nutrition and personal targets
 - Installable PWA shell with explicit update prompts and offline navigation
 - Account-partitioned offline history, raw meal drafts, and reviewed-entry sync
-- Opt-in daily Web Push reminders with local-time scheduling
 
 ## Architecture
 
@@ -97,7 +96,6 @@ Nyx AI uses these API groups:
 - `/api/nutrition/analyze` for structured meal estimates
 - `/api/nutrition/recommend` for structured rest-of-day meal recommendations
 - `/api/nutrition/entries` for nutrition-entry CRUD
-- `/api/user/push-settings` and `/api/user/push-subscriptions` for reminders
 
 The Data page requests only its selected Monday-to-Sunday period. Local week
 boundaries are converted to timezone-aware UTC instants before being sent as
@@ -134,11 +132,6 @@ local cache, drafts, and outbox.
 The first complete-history CSV request also marks the local history complete,
 allowing later offline exports. If this device has only weekly snapshots, the
 app asks the user to connect before claiming an all-history export.
-
-Web Push reminders are opt-in from Account. Notification permission is
-requested only after the user selects **Enable reminders**. Payloads are
-generic and contain no nutrition details. On iPhone and iPad, Web Push requires
-the site to be installed to the Home Screen.
 
 ## Production deployment
 

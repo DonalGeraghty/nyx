@@ -525,25 +525,6 @@ button, input, textarea, select { font: inherit; }
 .account-panel-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1rem; }
 .account-panel .button-secondary,
 .offline-drafts .button-secondary { color: var(--muted); background: transparent; }
-.status-enabled,
-.status-disabled {
-  flex: 0 0 auto;
-  padding: .25rem .5rem;
-  border: 1px solid var(--border-hover);
-  border-radius: 999px;
-  font-size: .75rem;
-}
-.status-enabled { color: #91d5a5; }
-.status-disabled { color: var(--muted); }
-.push-time-label { display: grid; gap: .4rem; margin-top: 1rem; color: var(--muted); font-size: .85rem; }
-.push-time-label input {
-  width: min(100%, 12rem);
-  padding: .65rem;
-  border: 1px solid var(--border);
-  border-radius: .45rem;
-  color: var(--text);
-  background: var(--background);
-}
 
 .nyxai-home-grid { padding: 0; list-style: none; }
 

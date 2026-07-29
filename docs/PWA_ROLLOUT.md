@@ -1,6 +1,6 @@
 # PWA rollout and rollback
 
-The implementation is split into three independently verifiable layers even
+The implementation is split into two independently verifiable layers even
 though they live on the same feature branch.
 
 ## Phase 1: installable shell
@@ -35,21 +35,3 @@ server entry; verify that an offline raw description never invokes analysis.
 Rollback boundary: disable the offline UI/sync manager first. The optional
 `client_request_id` remains backward compatible on Janus Gate and can safely
 stay deployed while the frontend rolls back.
-
-## Phase 3: opt-in reminders
-
-- Browser capability and permission checks
-- Per-user reminder time and IANA timezone
-- Account-scoped Push subscriptions
-- Generic notification payloads
-- VAPID configuration
-- Five-minute scheduler dispatch with a per-user delivery claim
-- Expired subscription cleanup and account-deletion cleanup
-
-Verification: enable a test device, run the protected dispatch endpoint, check
-one notification, run it again on the same local date, and confirm no duplicate
-delivery. Disable the reminder and confirm the subscription is removed.
-
-Rollback boundary: disable/delete the Cloud Scheduler job first, then roll back
-the reminder UI or backend. Existing subscriptions are inert while settings
-are disabled or no scheduler invokes dispatch.

@@ -25,36 +25,3 @@ registerRoute(
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') self.skipWaiting()
 })
-
-self.addEventListener('push', (event) => {
-  let data = {}
-  try {
-    data = event.data?.json() || {}
-  } catch {
-    data = {}
-  }
-  const title = data.title || 'Nyx AI reminder'
-  const options = {
-    body: data.body || 'Take a moment to update your nutrition log.',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-192x192.png',
-    tag: data.tag || 'nyx-daily-reminder',
-    data: { url: data.url || '/' },
-  }
-  event.waitUntil(self.registration.showNotification(title, options))
-})
-
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close()
-  const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href
-  event.waitUntil((async () => {
-    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-    const existing = windows.find((client) => client.url.startsWith(self.location.origin))
-    if (existing) {
-      await existing.focus()
-      if ('navigate' in existing) await existing.navigate(targetUrl)
-      return
-    }
-    await self.clients.openWindow(targetUrl)
-  })())
-})
