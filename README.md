@@ -8,7 +8,7 @@ The browser application is backed by [Janus Gate](https://github.com/DonalGeragh
 
 - Account registration, sign-in, sign-out, and permanent account deletion
 - Development-only demo account with local sample data
-- Bring-your-own-key OpenAI and Mistral AI integrations
+- Bring-your-own-key OpenAI, Mistral AI, and Claude (Anthropic) integrations
 - Per-user AI provider and model selection
 - AI-assisted meal analysis with structured, reviewable results
 - Manual creation, editing, and deletion of nutrition entries
@@ -26,7 +26,7 @@ Browser
        └─ Janus Gate (Flask API)
             ├─ Firestore: users and nutrition entries
             ├─ Cloud KMS: provider-key encryption
-            └─ OpenAI or Mistral AI: structured meal analysis
+            └─ OpenAI, Mistral AI, or Anthropic: structured meal analysis
 ```
 
 Nyx AI never sends meal data or provider credentials directly from the browser to a model vendor. It communicates with Janus Gate over HTTPS and uses a bearer JWT for authenticated requests.
@@ -98,9 +98,9 @@ The Data page requests only its selected Monday-to-Sunday period. Local week
 boundaries are converted to timezone-aware UTC instants before being sent as
 the entry list's inclusive `start` and exclusive `end` parameters.
 
-The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. Supplied OpenAI and Mistral keys exist only in their individual component state while being submitted. Janus Gate verifies and encrypts each key; Nyx AI can retrieve only safe status metadata such as whether a key is configured and its last four characters.
+The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. Supplied OpenAI, Mistral AI, and Anthropic keys exist only in their individual component state while being submitted. Janus Gate verifies and encrypts each key; Nyx AI can retrieve only safe status metadata such as whether a key is configured and its last four characters.
 
-Both keys can remain configured independently. Janus Gate resolves the saved provider and model when processing meal analysis and recommendation requests, so provider choice and credentials are never added to nutrition request bodies.
+All three keys can remain configured independently. Janus Gate resolves the saved provider and model when processing meal analysis and recommendation requests, so provider choice and credentials are never added to nutrition request bodies.
 
 Nutrition values are estimates. Analysis results are not persisted until the user selects **Log meal**.
 

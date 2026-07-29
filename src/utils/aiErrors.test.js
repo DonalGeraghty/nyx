@@ -25,4 +25,15 @@ describe('aiRequestError', () => {
       'Fallback'
     )).toEqual({ message, showAccountLink })
   })
+
+  it('uses the Claude display name when Anthropic is returned as a provider ID', () => {
+    expect(aiRequestError(
+      { code: 'provider_key_required', provider: 'anthropic' },
+      'analyzing food',
+      'Fallback'
+    )).toEqual({
+      message: 'Add an API key for Claude (Anthropic) in Account before analyzing food.',
+      showAccountLink: true,
+    })
+  })
 })

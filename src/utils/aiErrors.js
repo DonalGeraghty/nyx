@@ -1,6 +1,7 @@
 const PROVIDER_NAMES = {
   openai: 'OpenAI',
   mistral: 'Mistral AI',
+  anthropic: 'Claude (Anthropic)',
 }
 
 function providerName(provider) {

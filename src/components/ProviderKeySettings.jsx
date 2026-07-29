@@ -15,6 +15,11 @@ const PROVIDER_LINKS = {
     label: 'Create a Mistral API key',
     placeholder: 'Enter your Mistral API key',
   },
+  anthropic: {
+    href: 'https://console.anthropic.com/settings/keys',
+    label: 'Create a Claude API key',
+    placeholder: 'sk-ant-…',
+  },
 }
 
 function credentialErrorMessage(error, providerName) {

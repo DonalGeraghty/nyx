@@ -60,42 +60,45 @@ describe('AI settings service', () => {
     })
   })
 
-  it('uses the provider credential route for get, save, and remove', async () => {
-    authFetchMock
-      .mockResolvedValueOnce(response({ credential: { configured: true, last_four: '5678' } }))
-      .mockResolvedValueOnce(response({ credential: { configured: true, last_four: '9012' } }))
-      .mockResolvedValueOnce(response({}))
+  it.each(['mistral', 'anthropic'])(
+    'uses the provider credential route for %s get, save, and remove',
+    async (providerId) => {
+      authFetchMock
+        .mockResolvedValueOnce(response({ credential: { configured: true, last_four: '5678' } }))
+        .mockResolvedValueOnce(response({ credential: { configured: true, last_four: '9012' } }))
+        .mockResolvedValueOnce(response({}))
 
-    await expect(getAIProviderCredential('mistral')).resolves.toEqual({
-      configured: true,
-      last_four: '5678',
-    })
-    await expect(saveAIProviderCredential('mistral', 'secret-key')).resolves.toEqual({
-      configured: true,
-      last_four: '9012',
-    })
-    await deleteAIProviderCredential('mistral')
+      await expect(getAIProviderCredential(providerId)).resolves.toEqual({
+        configured: true,
+        last_four: '5678',
+      })
+      await expect(saveAIProviderCredential(providerId, 'secret-key')).resolves.toEqual({
+        configured: true,
+        last_four: '9012',
+      })
+      await deleteAIProviderCredential(providerId)
 
-    expect(authFetchMock).toHaveBeenNthCalledWith(
-      1,
-      '/api/user/ai-credentials/mistral',
-      { method: 'GET' }
-    )
-    expect(authFetchMock).toHaveBeenNthCalledWith(
-      2,
-      '/api/user/ai-credentials/mistral',
-      {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ api_key: 'secret-key' }),
-      }
-    )
-    expect(authFetchMock).toHaveBeenNthCalledWith(
-      3,
-      '/api/user/ai-credentials/mistral',
-      { method: 'DELETE' }
-    )
-  })
+      expect(authFetchMock).toHaveBeenNthCalledWith(
+        1,
+        `/api/user/ai-credentials/${providerId}`,
+        { method: 'GET' }
+      )
+      expect(authFetchMock).toHaveBeenNthCalledWith(
+        2,
+        `/api/user/ai-credentials/${providerId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ api_key: 'secret-key' }),
+        }
+      )
+      expect(authFetchMock).toHaveBeenNthCalledWith(
+        3,
+        `/api/user/ai-credentials/${providerId}`,
+        { method: 'DELETE' }
+      )
+    }
+  )
 
   it('retains provider metadata on API failures', async () => {
     const provider = { id: 'mistral', name: 'Mistral AI' }

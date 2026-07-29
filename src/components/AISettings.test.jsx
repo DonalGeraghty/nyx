@@ -57,6 +57,18 @@ function providerSettings() {
         ],
         credential: { configured: false },
       },
+      {
+        id: 'anthropic',
+        name: 'Claude (Anthropic)',
+        models: [
+          {
+            id: 'claude-sonnet-5',
+            name: 'Claude Sonnet 5',
+            description: 'A balanced Claude model.',
+          },
+        ],
+        credential: { configured: false },
+      },
     ],
   }
 }
@@ -87,6 +99,7 @@ describe('AISettings', () => {
 
     expect(await screen.findByRole('heading', { name: 'OpenAI API key' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Mistral AI API key' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Claude (Anthropic) API key' })).toBeInTheDocument()
     expect(screen.getByText('Configured ••••1234')).toBeInTheDocument()
 
     const openAIInput = screen.getByLabelText('Replace OpenAI API key')
@@ -117,6 +130,80 @@ describe('AISettings', () => {
       })
     })
     expect(await screen.findByText('Your AI provider and model have been updated.')).toBeInTheDocument()
+  })
+
+  it('supports the Claude key lifecycle and selects its model independently', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderSettings()
+
+    const claudeHeading = await screen.findByRole('heading', {
+      name: 'Claude (Anthropic) API key',
+    })
+    const claudePanel = claudeHeading.closest('section')
+    const claudeInput = within(claudePanel).getByLabelText(
+      'Enter Claude (Anthropic) API key'
+    )
+    expect(claudeInput).toHaveAttribute('placeholder', 'sk-ant-…')
+    expect(within(claudePanel).getByRole('link', {
+      name: 'Create a Claude API key',
+    })).toHaveAttribute('href', 'https://console.anthropic.com/settings/keys')
+
+    fireEvent.change(claudeInput, {
+      target: { value: '  sk-ant-api03-user-secret  ' },
+    })
+    fireEvent.click(within(claudePanel).getByRole('button', { name: 'Save key' }))
+
+    await waitFor(() => {
+      expect(saveAIProviderCredential).toHaveBeenCalledWith(
+        'anthropic',
+        'sk-ant-api03-user-secret'
+      )
+    })
+    expect(claudeInput).toHaveValue('')
+    expect(within(claudePanel).getByText('Configured ••••9876')).toBeInTheDocument()
+    expect(screen.getByText('Configured ••••1234')).toBeInTheDocument()
+
+    const claudeOption = screen.getByRole('radio', { name: /Claude \(Anthropic\)/ })
+    expect(claudeOption).toBeEnabled()
+    fireEvent.click(claudeOption)
+    expect(screen.getByLabelText('Model')).toHaveValue('claude-sonnet-5')
+    fireEvent.click(screen.getByRole('button', { name: 'Save AI profile' }))
+
+    await waitFor(() => {
+      expect(saveAISelection).toHaveBeenCalledWith({
+        provider: 'anthropic',
+        model: 'claude-sonnet-5',
+      })
+    })
+
+    fireEvent.click(within(claudePanel).getByRole('button', { name: 'Remove' }))
+    await waitFor(() => {
+      expect(deleteAIProviderCredential).toHaveBeenCalledWith('anthropic')
+    })
+    expect(within(claudePanel).getByText('Not configured')).toBeInTheDocument()
+    expect(screen.getByText('Configured ••••1234')).toBeInTheDocument()
+  })
+
+  it('names Claude when Anthropic rejects a submitted key', async () => {
+    saveAIProviderCredential.mockRejectedValueOnce({
+      code: 'provider_key_invalid',
+      status: 422,
+    })
+    renderSettings()
+
+    const claudePanel = (await screen.findByRole('heading', {
+      name: 'Claude (Anthropic) API key',
+    })).closest('section')
+    fireEvent.change(
+      within(claudePanel).getByLabelText('Enter Claude (Anthropic) API key'),
+      { target: { value: 'sk-ant-invalid-test-key' } }
+    )
+    fireEvent.click(within(claudePanel).getByRole('button', { name: 'Save key' }))
+
+    expect(await within(claudePanel).findByRole('alert')).toHaveTextContent(
+      'Claude (Anthropic) rejected this key. Check that it is active and has API access.'
+    )
+    expect(deleteAIProviderCredential).not.toHaveBeenCalled()
   })
 
   it('removes one provider key without changing the other credential', async () => {
@@ -151,12 +238,19 @@ describe('AISettings', () => {
       description: 'A higher-capability Mistral model.',
     })
     settings.providers[1].credential = { configured: true, last_four: '5678' }
+    settings.providers[2].models.push({
+      id: 'claude-haiku-4-5-20251001',
+      name: 'Claude Haiku 4.5',
+      description: 'A faster Claude model.',
+    })
+    settings.providers[2].credential = { configured: true, last_four: '2468' }
     getAISettings.mockResolvedValue(settings)
     renderSettings()
 
     const modelSelect = await screen.findByLabelText('Model')
     const openAIOption = screen.getByRole('radio', { name: /OpenAI/ })
     const mistralOption = screen.getByRole('radio', { name: /Mistral AI/ })
+    const claudeOption = screen.getByRole('radio', { name: /Claude \(Anthropic\)/ })
 
     expect(modelSelect).toHaveValue('gpt-4.1')
 
@@ -164,12 +258,20 @@ describe('AISettings', () => {
     expect(modelSelect).toHaveValue('mistral-small-latest')
     fireEvent.change(modelSelect, { target: { value: 'mistral-large-latest' } })
 
+    fireEvent.click(claudeOption)
+    expect(modelSelect).toHaveValue('claude-sonnet-5')
+    fireEvent.change(modelSelect, {
+      target: { value: 'claude-haiku-4-5-20251001' },
+    })
+
     fireEvent.click(openAIOption)
     expect(modelSelect).toHaveValue('gpt-4.1')
     fireEvent.change(modelSelect, { target: { value: 'gpt-4.1-mini' } })
 
     fireEvent.click(mistralOption)
     expect(modelSelect).toHaveValue('mistral-large-latest')
+    fireEvent.click(claudeOption)
+    expect(modelSelect).toHaveValue('claude-haiku-4-5-20251001')
     fireEvent.click(openAIOption)
     expect(modelSelect).toHaveValue('gpt-4.1-mini')
   })

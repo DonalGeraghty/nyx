@@ -142,7 +142,7 @@ button, input, textarea, select { font: inherit; }
 .ai-provider-fieldset legend,
 .ai-model-field { color: var(--muted); font-size: .85rem; }
 .ai-provider-fieldset legend { margin-bottom: .5rem; }
-.ai-provider-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.ai-provider-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; }
 
 .ai-provider-option {
   display: flex;
@@ -196,7 +196,7 @@ button, input, textarea, select { font: inherit; }
 
 .ai-key-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1rem;
 }
@@ -650,16 +650,21 @@ button, input, textarea, select { font: inherit; }
   .recommendation-projection > span { margin-right: 0; }
 }
 
+@media (max-width: 56rem) {
+  .ai-provider-options,
+  .ai-key-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 50rem) {
   .metric-grid { grid-template-columns: repeat(2, 1fr); }
   .recommendation-progress { grid-template-columns: repeat(2, 1fr); }
   .chart-grid { grid-template-columns: 1fr; }
   .entry-editor-item { grid-template-columns: 1fr 1fr; }
-  .ai-key-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 36rem) {
-  .ai-provider-options { grid-template-columns: 1fr; }
+  .ai-provider-options,
+  .ai-key-grid { grid-template-columns: 1fr; }
   .data-page-heading,
   .entry-editor-heading,
   .entry-editor-actions { display: grid; }
