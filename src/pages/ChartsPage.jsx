@@ -5,6 +5,7 @@ import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -117,11 +118,29 @@ function ChartsPage() {
                     <BarChart data={dailyData} accessibilityLayer margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                       <CartesianGrid stroke="#1c1c1c" vertical={false} />
                       <XAxis dataKey="label" stroke="#888" tickLine={false} axisLine={false} />
-                      <YAxis stroke="#888" tickLine={false} axisLine={false} width={48} />
+                      <YAxis
+                        stroke="#888"
+                        tickLine={false}
+                        axisLine={false}
+                        width={48}
+                        domain={[0, (dataMax) => Math.max(2000, dataMax)]}
+                      />
                       <Tooltip
                         contentStyle={tooltipStyle}
                         cursor={{ fill: '#0a0a0a' }}
                         formatter={(value) => [`${Number(value).toLocaleString()} kcal`, 'Calories']}
+                      />
+                      <ReferenceLine
+                        y={1800}
+                        stroke="#f59e0b"
+                        strokeDasharray="5 5"
+                        label={{ value: 'Upper limit · 1,800 kcal', position: 'insideTopRight', fill: '#fbbf24', fontSize: 12 }}
+                      />
+                      <ReferenceLine
+                        y={1500}
+                        stroke="#22c55e"
+                        strokeDasharray="5 5"
+                        label={{ value: 'Lower limit · 1,500 kcal', position: 'insideTopRight', fill: '#4ade80', fontSize: 12 }}
                       />
                       <Bar dataKey="calories" fill="#f2f2f2" radius={[4, 4, 0, 0]} />
                     </BarChart>
