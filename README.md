@@ -16,8 +16,6 @@ The browser application is backed by [Janus Gate](https://github.com/DonalGeragh
 - Seven-day period navigation and full-history CSV export
 - Seven-day calorie and protein charts
 - AI meal recommendations based on today's nutrition and personal targets
-- Installable PWA shell with explicit update prompts and offline navigation
-- Account-partitioned offline history, raw meal drafts, and reviewed-entry sync
 
 ## Architecture
 
@@ -30,6 +28,8 @@ Browser
             └─ OpenAI, Mistral AI, or Anthropic: structured meal analysis
 ```
 
+Nyx AI is a standard web application. It does not register a service worker, provide an installable PWA shell, or maintain an offline nutrition cache or sync queue.
+
 Nyx AI never sends meal data or provider credentials directly from the browser to a model vendor. It communicates with Janus Gate over HTTPS and uses a bearer JWT for authenticated requests.
 
 ## Tech stack
@@ -40,8 +40,6 @@ Nyx AI never sends meal data or provider credentials directly from the browser t
 - Recharts
 - Motion, Three.js, and OGL
 - Vitest and Testing Library tooling
-- Workbox through `vite-plugin-pwa`
-- IndexedDB through `idb`
 
 ## Local development
 
@@ -97,41 +95,13 @@ Nyx AI uses these API groups:
 - `/api/nutrition/recommend` for structured rest-of-day meal recommendations
 - `/api/nutrition/entries` for nutrition-entry CRUD
 
-The Data page requests only its selected Monday-to-Sunday period. Local week
-boundaries are converted to timezone-aware UTC instants before being sent as
-the entry list's inclusive `start` and exclusive `end` parameters. CSV export
-uses a separate `all=true` request so the download contains the complete
-nutrition history without changing the selected weekly view.
+The Data page requests only its selected Monday-to-Sunday period. Local week boundaries are converted to timezone-aware UTC instants before being sent as the entry list's inclusive `start` and exclusive `end` parameters. CSV export uses a separate `all=true` request so the download contains the complete nutrition history without changing the selected weekly view.
 
 The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. Supplied OpenAI, Mistral AI, and Anthropic keys exist only in their individual component state while being submitted. Janus Gate authenticates and encrypts each key without generating model output; Nyx AI can retrieve only safe status metadata such as whether a key is configured and its last four characters. Keys can be configured before provider credit is added, while billing and spend-limit errors are reported when an AI request is made.
 
 All three keys can remain configured independently. Janus Gate resolves the saved provider and model when processing meal analysis and recommendation requests, so provider choice and credentials are never added to nutrition request bodies.
 
 Nutrition values are estimates. Analysis results are not persisted until the user selects **Log meal**.
-
-## PWA and offline behavior
-
-The Vite PWA plugin generates the manifest and builds the custom service worker
-from [`src/service-worker.js`](src/service-worker.js). Standard, Apple touch,
-and Android maskable icons live under `public/icons/`.
-
-The service worker precaches only the application shell and static assets.
-Authenticated Janus Gate requests are always network-only: bearer tokens, API
-keys, AI responses, and nutrition API responses are never written to Cache
-Storage. Updates wait for the user to select **Update now**, protecting form
-state from an unexpected refresh.
-
-Private offline records use an IndexedDB database partitioned by Janus Gate's
-immutable `account_id`. Successful history reads populate the local snapshot.
-Raw meal descriptions entered without a connection are drafts and never call
-an AI provider automatically. Only reviewed structured entries can enter the
-outbox; each carries a stable `client_request_id` so retries cannot create a
-duplicate server record. Sign-out and account deletion clear that account's
-local cache, drafts, and outbox.
-
-The first complete-history CSV request also marks the local history complete,
-allowing later offline exports. If this device has only weekly snapshots, the
-app asks the user to connect before claiming an all-history export.
 
 ## Production deployment
 
@@ -144,14 +114,13 @@ The GitHub Actions workflow in [`.github/workflows/deploy-gcp.yml`](.github/work
 
 The workflow expects a `GCP_SA_KEY` GitHub Actions secret with permission to build, push, and deploy the service.
 
-Nginx serves the service worker, manifest, and HTML with revalidation/no-cache
-headers while keeping fingerprinted build assets immutable.
+Nginx serves `index.html` with no-cache headers while keeping fingerprinted static assets immutable.
 
 ## Project structure
 
 ```text
 .
-├── public/                 # Manifest, favicon, and installable-app icons
+├── public/                 # Website branding assets
 ├── src/
 │   ├── components/         # Shared UI and visual components
 │   ├── config/             # Janus Gate API configuration
