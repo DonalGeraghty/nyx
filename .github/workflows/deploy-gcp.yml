@@ -64,14 +64,6 @@ jobs:
             location = /index.html {
               add_header Cache-Control "no-cache, no-store, must-revalidate";
             }
-
-            location = /manifest.webmanifest {
-              add_header Cache-Control "no-cache";
-            }
-
-            location ~* ^/(sw|service-worker)\.js$ {
-              add_header Cache-Control "no-cache, no-store, must-revalidate";
-            }
             
             location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
               expires 1y;
@@ -110,7 +102,7 @@ jobs:
         
     - name: Configure Docker for Artifact Registry
       run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
-      
+        
     - name: Build and push Docker image
       run: |
         docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .

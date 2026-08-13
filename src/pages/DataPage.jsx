@@ -13,10 +13,6 @@ import {
   toDisplayEntries,
   updateMealEntry,
 } from '../services/nutrition'
-import {
-  enqueueNutritionEntry,
-  getCachedNutritionEntries,
-} from '../services/offlineStore'
 import { foodEntriesToCsv } from '../utils/csv'
 import {
   addLocalDays,
@@ -55,8 +51,6 @@ function DataPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState(null)
-  const [offlineSnapshotAt, setOfflineSnapshotAt] = useState(null)
-  const [syncVersion, setSyncVersion] = useState(0)
 
   const groups = useMemo(() => groupEntriesByLocalDay(entries), [entries])
   const totals = useMemo(() => totalNutrition(entries), [entries])
@@ -100,7 +94,6 @@ function DataPage() {
     setError('')
     setTruncated(false)
     setNotice(null)
-    setOfflineSnapshotAt(null)
 
     if (user?.isDemo) {
       setEntries(
@@ -116,24 +109,15 @@ function DataPage() {
       start: period.start,
       end: period.end,
       signal: controller.signal,
-      accountId: user?.accountId,
     })
       .then(({ entries: rows, pagination }) => {
         if (!active) return
         setEntries(toDisplayEntries(rows))
         setTruncated(Boolean(pagination?.truncated))
       })
-      .catch(async (requestError) => {
+      .catch((requestError) => {
         if (!active || requestError.name === 'AbortError') return
-        if (requestError instanceof TypeError && user?.accountId) {
-          const cached = await getCachedNutritionEntries(user.accountId, {
-            start: period.start,
-            end: period.end,
-          })
-          if (!active) return
-          setEntries(toDisplayEntries(cached.entries))
-          setOfflineSnapshotAt(cached.lastSyncedAt || 'never')
-        } else if (!handleUnauthorized(requestError)) {
+        if (!handleUnauthorized(requestError)) {
           setError(requestError.message || 'Could not load food entries.')
         }
       })
@@ -145,13 +129,7 @@ function DataPage() {
       active = false
       controller.abort()
     }
-  }, [period.key, syncVersion, user?.accountId, user?.isDemo])
-
-  useEffect(() => {
-    const refresh = () => setSyncVersion((version) => version + 1)
-    window.addEventListener('nyx-nutrition-synced', refresh)
-    return () => window.removeEventListener('nyx-nutrition-synced', refresh)
-  }, [])
+  }, [period.key, user?.isDemo])
 
   const handleDelete = async (entry) => {
     const confirmed = window.confirm(`Delete “${entry.food}” from your nutrition log?`)
@@ -160,7 +138,7 @@ function DataPage() {
     setDeletingId(entry.id)
     setError('')
     try {
-      await deleteMeal(entry.id, user?.accountId)
+      await deleteMeal(entry.id)
       setEntries((currentEntries) => (
         currentEntries.filter((row) => row.id !== entry.id)
       ))
@@ -181,7 +159,6 @@ function DataPage() {
       || `${Date.now()}-${Math.random().toString(16).slice(2)}`
     const requestPayload = {
       ...payload,
-      accountId: user?.accountId,
       clientRequestId,
     }
     try {
@@ -210,17 +187,7 @@ function DataPage() {
       }
       setEditor(null)
     } catch (requestError) {
-      if (
-        requestError instanceof TypeError
-        && !editor?.id
-        && user?.accountId
-      ) {
-        await enqueueNutritionEntry(user.accountId, requestPayload)
-        setEditor(null)
-        setNotice({
-          message: 'Entry saved to the sync queue. It will upload when you reconnect.',
-        })
-      } else if (!handleUnauthorized(requestError)) {
+      if (!handleUnauthorized(requestError)) {
         setError(requestError.message || 'Could not save this food entry.')
       }
     } finally {
@@ -232,28 +199,9 @@ function DataPage() {
     setExporting(true)
     setError('')
     try {
-      let exportEntries
-      if (user?.isDemo) {
-        exportEntries = demoFoodEntries
-      } else {
-        try {
-          exportEntries = toDisplayEntries(await listAllMeals({
-            accountId: user?.accountId,
-          }))
-        } catch (requestError) {
-          if (!(requestError instanceof TypeError) || !user?.accountId) throw requestError
-          const cached = await getCachedNutritionEntries(user.accountId, {
-            requireComplete: true,
-          })
-          if (!cached.complete) {
-            throw new Error(
-              'Connect once to export all history. The complete history is not stored on this device yet.'
-            )
-          }
-          exportEntries = toDisplayEntries(cached.entries)
-          setOfflineSnapshotAt(cached.lastSyncedAt)
-        }
-      }
+      const exportEntries = user?.isDemo
+        ? demoFoodEntries
+        : toDisplayEntries(await listAllMeals())
       const csv = foodEntriesToCsv(exportEntries)
       const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })
       const downloadUrl = URL.createObjectURL(blob)
@@ -325,13 +273,6 @@ function DataPage() {
         </section>
 
         {error && <p className="content-error" role="alert">{error}</p>}
-        {offlineSnapshotAt && (
-          <p className="data-period-warning" role="status">
-            {offlineSnapshotAt === 'never'
-              ? 'You are offline and no saved snapshot exists for this period.'
-              : `Showing data saved on this device. Last synced ${new Date(offlineSnapshotAt).toLocaleString()}.`}
-          </p>
-        )}
         {notice && (
           <div className="data-period-notice" role="status">
             <span>{notice.message}</span>

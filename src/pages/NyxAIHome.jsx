@@ -1,14 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Lightfall from '../components/Lightfall'
 import { useAuth } from '../context/AuthContext'
 import { analyzeMeal, logMeal } from '../services/nutrition'
-import {
-  deleteMealDraft,
-  enqueueNutritionEntry,
-  listMealDrafts,
-  saveMealDraft,
-} from '../services/offlineStore'
 import { aiRequestError } from '../utils/aiErrors'
 
 const LIGHTFALL_COLORS = ['#ffffff', '#b8b8b8', '#6f6f6f']
@@ -24,15 +18,6 @@ function NyxAIHome() {
   const [showAISettingsLink, setShowAISettingsLink] = useState(false)
   const [notice, setNotice] = useState('')
   const [logged, setLogged] = useState(false)
-  const [drafts, setDrafts] = useState([])
-
-  const refreshDrafts = useCallback(async () => {
-    setDrafts(await listMealDrafts(user?.accountId))
-  }, [user?.accountId])
-
-  useEffect(() => {
-    refreshDrafts()
-  }, [refreshDrafts])
 
   const handleUnauthorized = (requestError) => {
     if (requestError.status !== 401) return false
@@ -41,7 +26,7 @@ function NyxAIHome() {
     return true
   }
 
-  const runAnalysis = async (submittedMessage, draftId = null) => {
+  const runAnalysis = async (submittedMessage) => {
     setBusy('analyze')
     setError('')
     setShowAISettingsLink(false)
@@ -53,21 +38,8 @@ function NyxAIHome() {
       setAnalysis(result)
       setSourceMessage(submittedMessage)
       setMessage('')
-      if (draftId) {
-        await deleteMealDraft(user?.accountId, draftId)
-        await refreshDrafts()
-      }
     } catch (requestError) {
-      if (requestError instanceof TypeError && user?.accountId) {
-        if (!draftId) await saveMealDraft(user.accountId, submittedMessage)
-        await refreshDrafts()
-        setMessage('')
-        setNotice(
-          draftId
-            ? 'Connection lost. The existing draft is still saved.'
-            : 'Connection lost. The meal description was saved as a draft.'
-        )
-      } else if (!handleUnauthorized(requestError)) {
+      if (!handleUnauthorized(requestError)) {
         const errorDetails = aiRequestError(
           requestError,
           'analyzing food',
@@ -85,13 +57,6 @@ function NyxAIHome() {
     event.preventDefault()
     const submittedMessage = message.trim()
     if (!submittedMessage) return
-    if (!navigator.onLine && user?.accountId) {
-      await saveMealDraft(user.accountId, submittedMessage)
-      await refreshDrafts()
-      setMessage('')
-      setNotice('Saved as a draft. Analyze it explicitly when you are back online.')
-      return
-    }
     await runAnalysis(submittedMessage)
   }
 
@@ -112,16 +77,7 @@ function NyxAIHome() {
       setLogged(true)
       setNotice('Meal logged successfully.')
     } catch (requestError) {
-      if (requestError instanceof TypeError && user?.accountId) {
-        await enqueueNutritionEntry(user.accountId, {
-          items: analysis.items,
-          sourceMessage,
-          eatenAt,
-          clientRequestId,
-        })
-        setLogged(true)
-        setNotice('Saved to the sync queue. It will log when your connection returns.')
-      } else if (!handleUnauthorized(requestError)) {
+      if (!handleUnauthorized(requestError)) {
         setError(requestError.message || 'Could not log this meal.')
       }
     } finally {
@@ -180,46 +136,6 @@ function NyxAIHome() {
               <Link to="/account">Open Account</Link>
             )}
           </div>
-        )}
-
-        {notice && !analysis && (
-          <p className="meal-log-success" role="status">{notice}</p>
-        )}
-
-        {drafts.length > 0 && (
-          <section className="offline-drafts" aria-labelledby="offline-drafts-heading">
-            <div>
-              <h2 id="offline-drafts-heading">Meal drafts</h2>
-              <p>Drafts never call an AI provider until you choose Analyze.</p>
-            </div>
-            <ul>
-              {drafts.map((draft) => (
-                <li key={draft.id}>
-                  <span>{draft.message}</span>
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => runAnalysis(draft.message, draft.id)}
-                      disabled={Boolean(busy) || !navigator.onLine}
-                    >
-                      Analyze
-                    </button>
-                    <button
-                      type="button"
-                      className="button-secondary"
-                      onClick={async () => {
-                        await deleteMealDraft(user?.accountId, draft.id)
-                        await refreshDrafts()
-                      }}
-                      disabled={Boolean(busy)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
         )}
 
         {analysis && (
