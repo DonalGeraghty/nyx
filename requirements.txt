@@ -1,8 +1,8 @@
-# NyxAI frontend (React / Vite)
+# Nyx frontend (React / Vite)
 #
 # This app is built and run with Node.js. Install dependencies with:
 #   npm install
 #
-# There are no Python runtime dependencies for NyxAI. This file exists so
+# There are no Python runtime dependencies for Nyx. This file exists so
 # automated scans or docs that look for requirements.txt are not misled into
 # installing a Flask/backend stack here—that belongs in the janus-gate repo.

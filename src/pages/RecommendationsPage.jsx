@@ -37,7 +37,7 @@ const DEMO_MEALS = [
 ]
 
 function settingsStorageKey(email) {
-  return `nyxai-recommendation-settings:${String(email || '').toLowerCase()}`
+  return `nyx-recommendation-settings:${String(email || '').toLowerCase()}`
 }
 
 function demoEntriesForToday(now = new Date()) {

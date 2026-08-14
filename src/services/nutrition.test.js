@@ -110,7 +110,7 @@ describe('nutrition service errors', () => {
     })
 
     const [path, options] = authFetchMock.mock.calls[0]
-    const requestUrl = new URL(path, 'https://nyxai.local')
+    const requestUrl = new URL(path, 'https://nyx.local')
     expect(requestUrl.pathname).toBe('/api/nutrition/entries')
     expect(requestUrl.searchParams.get('start')).toBe(start.toISOString())
     expect(requestUrl.searchParams.get('end')).toBe(end.toISOString())

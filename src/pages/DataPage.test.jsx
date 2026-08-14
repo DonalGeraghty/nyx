@@ -232,7 +232,7 @@ describe('DataPage weekly history', () => {
       'Historical meal (1 serving)',
       'Oldest meal (1 serving)',
     ])
-    expect(downloadLink.download).toBe('nyxai-food-entries-all.csv')
+    expect(downloadLink.download).toBe('nyx-food-entries-all.csv')
     expect(clickMock).toHaveBeenCalledOnce()
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:nutrition-export')
   })

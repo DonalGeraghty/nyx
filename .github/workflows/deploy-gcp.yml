@@ -3,15 +3,12 @@ name: Deploy to Google Cloud Platform
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
 env:
   PROJECT_ID: donal-geraghty-home
   REGION: europe-west1
-  # Codename Minerva — Roman goddess of wisdom and the arts; Cloud Run + Artifact Registry id
-  SERVICE_NAME: minerva
-  REPOSITORY: minerva
+  SERVICE_NAME: nyx
+  REPOSITORY: nyx
 
 jobs:
   deploy:
@@ -94,11 +91,12 @@ jobs:
         
     - name: Create Artifact Registry Repository
       run: |
-        gcloud artifacts repositories create ${{ env.REPOSITORY }} \
-          --repository-format=docker \
+        gcloud artifacts repositories describe ${{ env.REPOSITORY }} \
           --location=${{ env.REGION }} \
-          --description="Minerva frontend — Docker images" \
-          || echo "Repository already exists"
+          || gcloud artifacts repositories create ${{ env.REPOSITORY }} \
+            --repository-format=docker \
+            --location=${{ env.REGION }} \
+            --description="Nyx frontend — Docker images"
         
     - name: Configure Docker for Artifact Registry
       run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev

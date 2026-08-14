@@ -1,5 +1,5 @@
 // Compatibility shims retained while callers are simplified to online-only behavior.
-// Nyx AI no longer stores profiles, nutrition history, drafts, or sync queues locally.
+// Nyx no longer stores profiles, nutrition history, drafts, or sync queues locally.
 
 export async function saveOfflineProfile() {}
 export async function getActiveOfflineProfile() { return null }

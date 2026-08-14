@@ -2,7 +2,7 @@ import React from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import NyxAIHome from './NyxAIHome'
+import NyxHome from './NyxHome'
 import { analyzeMeal } from '../services/nutrition'
 
 const { logoutMock } = vi.hoisted(() => ({ logoutMock: vi.fn() }))
@@ -23,7 +23,7 @@ vi.mock('../components/Lightfall', () => ({
 function renderHome() {
   return render(
     <MemoryRouter>
-      <NyxAIHome />
+      <NyxHome />
     </MemoryRouter>
   )
 }
@@ -35,7 +35,7 @@ function submitMeal(message) {
   fireEvent.click(screen.getByRole('button', { name: 'Send' }))
 }
 
-describe('NyxAIHome provider errors', () => {
+describe('NyxHome provider errors', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

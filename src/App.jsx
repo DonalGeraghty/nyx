@@ -12,7 +12,7 @@ import Dock from './components/Dock'
 import AccountPage from './pages/AccountPage'
 import DataPage from './pages/DataPage'
 import LoginSplash from './pages/LoginSplash'
-import NyxAIHome from './pages/NyxAIHome'
+import NyxHome from './pages/NyxHome'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 const ChartsPage = React.lazy(() => import('./pages/ChartsPage'))
@@ -65,7 +65,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route element={<ProtectedLayout />}>
-        <Route path="/" element={<NyxAIHome />} />
+        <Route path="/" element={<NyxHome />} />
         <Route path="/data" element={<DataPage />} />
         <Route
           path="/charts"

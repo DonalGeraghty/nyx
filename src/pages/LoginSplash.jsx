@@ -26,11 +26,11 @@ function LoginSplash() {
   return (
     <div className="login-splash">
       <div className="login-splash-top">
-        <h1 className="login-splash-brand">NyxAI</h1>
+        <h1 className="login-splash-brand">Nyx</h1>
       </div>
       <div className="login-splash-inner">
         <p className="login-splash-intro">
-          Sign in to access your NyxAI account.
+          Sign in to access your Nyx account.
         </p>
         {import.meta.env.DEV && (
           <button type="button" className="login-splash-demo" onClick={loginAsDemo}>

@@ -1,8 +1,8 @@
 {
-  "name": "nyxai",
+  "name": "nyx",
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://DonalGeraghty.github.io/NyxAI",
+  "homepage": "https://DonalGeraghty.github.io/Nyx",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -15,7 +15,7 @@
   },
   "author": "",
   "license": "ISC",
-  "description": "NyxAI — React/Vite frontend named for Nyx, the Greek goddess of night.",
+  "description": "Nyx — an AI-assisted nutrition tracking frontend.",
   "engines": {
     "node": ">=22"
   },

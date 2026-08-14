@@ -1,4 +1,4 @@
-// NyxAI — named for Nyx, the Greek goddess of night.
+// Nyx is named for the Greek goddess of night.
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'

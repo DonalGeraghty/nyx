@@ -7,7 +7,7 @@ import { aiRequestError } from '../utils/aiErrors'
 
 const LIGHTFALL_COLORS = ['#ffffff', '#b8b8b8', '#6f6f6f']
 
-function NyxAIHome() {
+function NyxHome() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const [message, setMessage] = useState('')
@@ -86,7 +86,7 @@ function NyxAIHome() {
   }
 
   return (
-    <main className="hub-page nyxai-home">
+    <main className="hub-page nyx-home">
       <Lightfall
         colors={LIGHTFALL_COLORS}
         backgroundColor="#000000"
@@ -103,7 +103,7 @@ function NyxAIHome() {
       />
       <div className="hub-inner">
         <header className="hub-header">
-          <p className="hub-eyebrow">NyxAI</p>
+          <p className="hub-eyebrow">Nyx</p>
           <h1 className="hub-title">Food Log</h1>
         </header>
 
@@ -197,4 +197,4 @@ function NyxAIHome() {
   )
 }
 
-export default NyxAIHome
+export default NyxHome

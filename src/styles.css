@@ -415,7 +415,7 @@ button, input, textarea, select { font: inherit; }
 }
 
 .hub-title { margin: 0; font-size: clamp(3rem, 10vw, 6rem); }
-.hub-sub, .hub-body, .nyxai-home-card-blurb { color: var(--muted); }
+.hub-sub, .hub-body, .nyx-home-card-blurb { color: var(--muted); }
 .hub-body { margin-top: 2.5rem; }
 
 .message-composer { display: grid; gap: .75rem; margin-top: 2.5rem; }
@@ -526,9 +526,9 @@ button, input, textarea, select { font: inherit; }
 .account-panel .button-secondary,
 .offline-drafts .button-secondary { color: var(--muted); background: transparent; }
 
-.nyxai-home-grid { padding: 0; list-style: none; }
+.nyx-home-grid { padding: 0; list-style: none; }
 
-.nyxai-home-card {
+.nyx-home-card {
   display: grid;
   gap: .35rem;
   padding: 1.25rem;
@@ -538,13 +538,13 @@ button, input, textarea, select { font: inherit; }
   text-decoration: none;
 }
 
-.nyxai-home-card:hover,
-.nyxai-home-card:focus-visible {
+.nyx-home-card:hover,
+.nyx-home-card:focus-visible {
   border-color: var(--border-hover);
   outline: none;
 }
 
-.nyxai-home-card-title { font-weight: 700; }
+.nyx-home-card-title { font-weight: 700; }
 
 .recommendations-header p { margin-top: -.4rem; }
 

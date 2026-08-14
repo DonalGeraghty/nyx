@@ -22,7 +22,7 @@ import {
 const AuthContext = createContext(null)
 const DEMO_TOKEN = 'local-demo-session'
 const DEMO_USER = {
-  email: 'demo@nyxai.local',
+  email: 'demo@nyx.local',
   accountId: 'local-demo-account',
   isDemo: true,
 }

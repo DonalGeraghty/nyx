@@ -208,7 +208,7 @@ function DataPage() {
       const link = document.createElement('a')
 
       link.href = downloadUrl
-      link.download = 'nyxai-food-entries-all.csv'
+      link.download = 'nyx-food-entries-all.csv'
       document.body.appendChild(link)
       try {
         link.click()

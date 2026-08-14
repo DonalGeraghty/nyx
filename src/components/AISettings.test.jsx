@@ -318,7 +318,7 @@ describe('AISettings', () => {
   })
 
   it('keeps provider controls unavailable for the demo account', () => {
-    authState.user = { email: 'demo@nyxai.local', isDemo: true }
+    authState.user = { email: 'demo@nyx.local', isDemo: true }
     renderSettings()
 
     expect(screen.getByRole('heading', { name: 'AI profile' })).toBeInTheDocument()
