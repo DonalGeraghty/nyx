@@ -1,5 +1,5 @@
 // Janus — auth API (Cloud Run). URL updates if service name changes.
-export const API_BASE_URL = 'https://janus-gate-965419436472.europe-west1.run.app'
+export const API_BASE_URL = 'https://janus-api-schep5xsoq-ew.a.run.app'
 
 export const API_ENDPOINTS = {
   AUTH_REGISTER: '/api/auth/register',
