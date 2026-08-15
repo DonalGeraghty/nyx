@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import Brand from '../components/Brand'
 import { useAuth } from '../context/AuthContext'
 import { demoFoodEntries } from '../data/foodEntries'
 import { listMeals, recommendMeals, toDisplayEntries } from '../services/nutrition'
@@ -212,6 +213,7 @@ function RecommendationsPage() {
   return (
     <main className="content-page">
       <div className="content-inner recommendations-page">
+        <Brand />
         <header className="recommendations-header">
           <h1>Recommendations</h1>
           <p>Build a protein-focused plan for the rest of today.</p>

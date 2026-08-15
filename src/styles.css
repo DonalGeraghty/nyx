@@ -41,8 +41,7 @@ button, input, textarea, select { font: inherit; }
 .login-splash { place-content: center; }
 .login-splash-inner { width: min(100%, 24rem); }
 
-.login-splash-top { text-align: center; }
-.login-splash-brand { font-size: 3rem; }
+.login-splash-top .nyx-brand { justify-content: center; margin-bottom: 1.5rem; }
 .login-splash-tabs { display: flex; gap: .5rem; margin: 1.5rem 0; }
 .login-splash-form, .login-splash-field { display: grid; gap: .5rem; }
 .login-splash-form { gap: 1rem; }
@@ -214,6 +213,45 @@ button, input, textarea, select { font: inherit; }
   letter-spacing: .04em;
 }
 
+.nyx-brand {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  color: #b8b8c2;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.nyx-brand-home {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: inherit;
+  background: none;
+  line-height: 0;
+}
+
+.nyx-brand-home:focus-visible { outline: 2px solid #aaa4df; outline-offset: 3px; }
+
+.nyx-brand-mark {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid #5b5674;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 .9rem rgba(146, 132, 255, .24);
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.nyx-brand-home:hover .nyx-brand-mark {
+  border-color: #8981ae;
+  box-shadow: 0 0 1.1rem rgba(146, 132, 255, .38);
+}
+
 .hub-inner {
   width: min(100% - 2rem, 60rem);
   margin-inline: auto;
@@ -232,6 +270,7 @@ button, input, textarea, select { font: inherit; }
 
 .content-page { padding: 3rem 1rem; }
 .content-inner { width: min(100%, 60rem); margin-inline: auto; }
+.content-inner > .nyx-brand { margin-bottom: clamp(3rem, 8vh, 5.5rem); }
 .content-inner h1 { margin-top: 0; }
 .content-inner p { color: var(--muted); }
 .content-inner .content-error { color: #ff8c8c; }
@@ -406,13 +445,7 @@ button, input, textarea, select { font: inherit; }
   max-width: 38rem;
   margin-top: clamp(2rem, 8vh, 6rem);
 }
-.hub-eyebrow {
-  margin: 0 0 .4rem;
-  color: var(--muted);
-  font-size: .75rem;
-  font-weight: 700;
-  letter-spacing: .18em;
-}
+.hub-inner > .nyx-brand { margin-bottom: clamp(3rem, 8vh, 5rem); }
 
 .hub-title { margin: 0; font-size: clamp(3rem, 10vw, 6rem); }
 .hub-sub, .hub-body, .nyx-home-card-blurb { color: var(--muted); }
