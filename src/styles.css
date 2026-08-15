@@ -16,6 +16,12 @@
 
 body { margin: 0; background: var(--background); }
 
+.app {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
 a { color: inherit; }
 
 button, input, textarea, select { font: inherit; }
@@ -314,7 +320,11 @@ button, input, textarea, select { font: inherit; }
   margin-inline: auto;
 }
 
-.app > main { padding-bottom: 7rem; }
+.app > main {
+  position: relative;
+  z-index: 1;
+  padding-bottom: 7rem;
+}
 
 .hub-page {
   position: relative;
