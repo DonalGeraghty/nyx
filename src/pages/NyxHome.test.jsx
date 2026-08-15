@@ -16,10 +16,6 @@ vi.mock('../services/nutrition', () => ({
   logMeal: vi.fn(),
 }))
 
-vi.mock('../components/Lightfall', () => ({
-  default: () => <div data-testid="lightfall" />,
-}))
-
 function renderHome() {
   return render(
     <MemoryRouter>

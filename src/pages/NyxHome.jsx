@@ -1,12 +1,9 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Brand from '../components/Brand'
-import Lightfall from '../components/Lightfall'
 import { useAuth } from '../context/AuthContext'
 import { analyzeMeal, logMeal } from '../services/nutrition'
 import { aiRequestError } from '../utils/aiErrors'
-
-const LIGHTFALL_COLORS = ['#ffffff', '#b8b8b8', '#6f6f6f']
 
 function NyxHome() {
   const navigate = useNavigate()
@@ -88,20 +85,6 @@ function NyxHome() {
 
   return (
     <main className="hub-page nyx-home">
-      <Lightfall
-        colors={LIGHTFALL_COLORS}
-        backgroundColor="#000000"
-        speed={0.3}
-        streakCount={4}
-        streakWidth={0.7}
-        streakLength={1.4}
-        glow={0.55}
-        density={0.5}
-        twinkle={0.45}
-        backgroundGlow={0.05}
-        opacity={0.6}
-        mouseStrength={0.25}
-      />
       <div className="hub-inner">
         <Brand />
         <header className="hub-header">
