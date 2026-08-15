@@ -252,6 +252,63 @@ button, input, textarea, select { font: inherit; }
   box-shadow: 0 0 1.1rem rgba(146, 132, 255, .38);
 }
 
+.nyx-ambient {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.nyx-ambient::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0, var(--background) 75%);
+  content: '';
+}
+
+.nyx-ambient-orbit {
+  position: absolute;
+  display: block;
+  border: 1px solid rgba(174, 162, 255, .1);
+  border-radius: 50%;
+  filter: blur(.15px);
+}
+
+.nyx-ambient-orbit-one {
+  top: -42rem;
+  left: 50%;
+  width: 86rem;
+  height: 86rem;
+  background: radial-gradient(circle at 50% 58%, rgba(138, 122, 255, .1), transparent 42%);
+  transform: translateX(-50%);
+  animation: nyx-ambient-breathe 12s ease-in-out infinite alternate;
+}
+
+.nyx-ambient-orbit-two {
+  top: -26rem;
+  left: 50%;
+  width: 54rem;
+  height: 54rem;
+  box-shadow: 0 0 10rem rgba(138, 122, 255, .08);
+  transform: translateX(-50%);
+}
+
+.nyx-ambient-grain {
+  position: absolute;
+  inset: 0;
+  opacity: .055;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+}
+
+@keyframes nyx-ambient-breathe {
+  to { opacity: .65; transform: translateX(-50%) scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nyx-ambient-orbit-one { animation: none; }
+}
+
 .hub-inner {
   width: min(100% - 2rem, 60rem);
   margin-inline: auto;
