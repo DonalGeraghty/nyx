@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AISettings from '../components/AISettings'
+import Brand from '../components/Brand'
 import { useAuth } from '../context/AuthContext'
 
 function AccountPage() {
@@ -35,6 +36,7 @@ function AccountPage() {
   return (
     <main className="content-page account-page">
       <div className="content-inner account-inner">
+        <Brand />
         <header className="account-header">
           <h1 className="account-title">Account</h1>
           <p className="account-email">{user?.email}</p>

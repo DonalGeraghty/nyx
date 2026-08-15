@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import Brand from '../components/Brand'
 import { useAuth } from '../context/AuthContext'
 import { demoFoodEntries } from '../data/foodEntries'
 import { listMeals, toDisplayEntries } from '../services/nutrition'
@@ -67,6 +68,7 @@ function ChartsPage() {
   return (
     <main className="content-page">
       <div className="content-inner charts-page">
+        <Brand />
         <header>
           <h1>Charts</h1>
           <p>Nutrition trends from the last seven days.</p>

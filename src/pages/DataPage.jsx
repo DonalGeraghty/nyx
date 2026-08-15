@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import Brand from '../components/Brand'
 import DayEntryGroup from '../components/DayEntryGroup'
 import NutritionEntryForm from '../components/NutritionEntryForm'
 import WeekNavigator, { formatWeekRange } from '../components/WeekNavigator'
@@ -228,6 +229,7 @@ function DataPage() {
   return (
     <main className="content-page">
       <div className="content-inner">
+        <Brand />
         <div className="data-page-heading">
           <div>
             <h1>Data</h1>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import Brand from '../components/Brand'
 import Lightfall from '../components/Lightfall'
 import { useAuth } from '../context/AuthContext'
 import { analyzeMeal, logMeal } from '../services/nutrition'
@@ -102,8 +103,8 @@ function NyxHome() {
         mouseStrength={0.25}
       />
       <div className="hub-inner">
+        <Brand />
         <header className="hub-header">
-          <p className="hub-eyebrow">Nyx</p>
           <h1 className="hub-title">Food Log</h1>
         </header>
 

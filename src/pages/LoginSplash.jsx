@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import Brand from '../components/Brand'
 import { useAuth } from '../context/AuthContext'
 
 function LoginSplash() {
@@ -26,7 +27,7 @@ function LoginSplash() {
   return (
     <div className="login-splash">
       <div className="login-splash-top">
-        <h1 className="login-splash-brand">Nyx</h1>
+        <Brand homeLink={false} />
       </div>
       <div className="login-splash-inner">
         <p className="login-splash-intro">
