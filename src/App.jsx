@@ -8,6 +8,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom'
+import AmbientBackground from './components/AmbientBackground'
 import Dock from './components/Dock'
 import AccountPage from './pages/AccountPage'
 import DataPage from './pages/DataPage'
@@ -55,6 +56,7 @@ function ProtectedLayout() {
 
   return (
     <div className="app">
+      <AmbientBackground />
       <AppDock />
       <Outlet />
     </div>

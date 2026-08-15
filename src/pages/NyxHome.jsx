@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import AmbientBackground from '../components/AmbientBackground'
 import Brand from '../components/Brand'
 import { useAuth } from '../context/AuthContext'
 import { analyzeMeal, logMeal } from '../services/nutrition'
@@ -86,7 +85,6 @@ function NyxHome() {
 
   return (
     <main className="hub-page nyx-home">
-      <AmbientBackground />
       <div className="hub-inner">
         <Brand />
         <header className="hub-header">
