@@ -25,10 +25,10 @@ function renderHome() {
 }
 
 function submitMeal(message) {
-  fireEvent.change(screen.getByLabelText('Describe what you ate'), {
+  fireEvent.change(screen.getByLabelText('Tell Nyx about your meal'), {
     target: { value: message },
   })
-  fireEvent.click(screen.getByRole('button', { name: 'Send' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Analyze meal' }))
 }
 
 describe('NyxHome provider errors', () => {
