@@ -111,18 +111,6 @@ function ChartsPage() {
                         cursor={{ fill: '#0a0a0a' }}
                         formatter={(value) => [`${Number(value).toLocaleString()} kcal`, 'Calories']}
                       />
-                      <ReferenceLine
-                        y={1800}
-                        stroke="#f59e0b"
-                        strokeDasharray="5 5"
-                        label={{ value: 'Upper limit · 1,800 kcal', position: 'insideTopRight', fill: '#fbbf24', fontSize: 12 }}
-                      />
-                      <ReferenceLine
-                        y={1500}
-                        stroke="#22c55e"
-                        strokeDasharray="5 5"
-                        label={{ value: 'Lower limit · 1,500 kcal', position: 'insideTopRight', fill: '#4ade80', fontSize: 12 }}
-                      />
                       <Bar dataKey="calories" fill="#f2f2f2" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
