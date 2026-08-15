@@ -87,12 +87,17 @@ function NyxHome() {
     <main className="hub-page nyx-home">
       <div className="hub-inner">
         <Brand />
-        <header className="hub-header">
-          <h1 className="hub-title">Food Log</h1>
+        <header className="food-log-hero">
+          <p className="home-eyebrow">Natural language nutrition record</p>
+          <h1 className="hub-title">Food log.</h1>
+          <p>
+            Describe what you ate. Nyx will estimate the nutrition and structure it
+            for you to review before anything is saved.
+          </p>
         </header>
 
         <form className="message-composer" onSubmit={handleSubmit}>
-          <label className="visually-hidden" htmlFor="message">Describe what you ate</label>
+          <label htmlFor="message">Tell Nyx about your meal</label>
           <textarea
             id="message"
             value={message}
@@ -103,14 +108,18 @@ function NyxHome() {
                 event.currentTarget.form.requestSubmit()
               }
             }}
-            placeholder="I ate an apple…"
-            rows="5"
+            placeholder="I had a bowl of porridge with banana and honey, plus a coffee with milk…"
+            rows="6"
             maxLength="2000"
             disabled={Boolean(busy)}
           />
-          <button type="submit" disabled={Boolean(busy) || !message.trim()}>
-            {busy === 'analyze' ? 'Analyzing…' : 'Send'}
-          </button>
+          <div className="message-composer-actions">
+            <span>Ctrl/⌘ + Enter to send</span>
+            <button type="submit" disabled={Boolean(busy) || !message.trim()}>
+              {busy === 'analyze' ? 'Analyzing…' : 'Analyze meal'}
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
         </form>
 
         {error && (
@@ -126,6 +135,7 @@ function NyxHome() {
           <section className="message-response" aria-live="polite">
             <div className="meal-result-heading">
               <div>
+                <p className="home-eyebrow">Ready to review</p>
                 <h2>Estimated nutrition</h2>
                 <p className="meal-confidence">Confidence: {analysis.confidence}</p>
               </div>
@@ -165,15 +175,20 @@ function NyxHome() {
               <p className="meal-clarification">{analysis.clarification_question}</p>
             )}
 
-            <button
-              type="button"
-              className="meal-log-button"
-              onClick={handleLog}
-              disabled={Boolean(busy) || logged}
-            >
-              {busy === 'log' ? 'Logging…' : logged ? 'Logged' : 'Log meal'}
-            </button>
-            {notice && <p className="meal-log-success" role="status">{notice}</p>}
+            <footer className="meal-review-footer">
+              <p className={logged ? 'meal-log-success' : undefined} role={notice ? 'status' : undefined}>
+                {notice || 'Nothing is saved until you confirm.'}
+              </p>
+              <button
+                type="button"
+                className="meal-log-button"
+                onClick={handleLog}
+                disabled={Boolean(busy) || logged}
+              >
+                {busy === 'log' ? 'Logging…' : logged ? 'Meal logged' : 'Log meal'}
+                <span aria-hidden="true">✓</span>
+              </button>
+            </footer>
           </section>
         )}
       </div>
