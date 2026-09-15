@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import {
   addLocalDays,
   entryIsInPeriod,
@@ -5,7 +6,6 @@ import {
   groupEntriesByLocalDay,
   localDateFromKey,
   localDateKey,
-  startOfLocalWeek,
   totalNutrition,
   totalNutritionForLocalDay,
   weekPeriodFor,

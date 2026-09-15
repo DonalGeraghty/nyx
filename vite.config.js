@@ -8,10 +8,6 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.js',
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+    fileParallelism: false,
   },
 })

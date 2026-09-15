@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Brand from '../components/Brand'
 import { useAuth } from '../context/AuthContext'
@@ -7,7 +7,7 @@ import { aiRequestError } from '../utils/aiErrors'
 
 function NyxHome() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
   const [message, setMessage] = useState('')
   const [sourceMessage, setSourceMessage] = useState('')
   const [analysis, setAnalysis] = useState(null)
@@ -68,7 +68,7 @@ function NyxHome() {
     const clientRequestId = globalThis.crypto?.randomUUID?.()
       || `${Date.now()}-${Math.random().toString(16).slice(2)}`
     try {
-      await logMeal(analysis.items, sourceMessage, user?.accountId, {
+      await logMeal(analysis.items, sourceMessage, {
         clientRequestId,
         eatenAt,
       })
