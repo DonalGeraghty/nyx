@@ -34,11 +34,11 @@ Nyx never sends meal data or provider credentials directly from the browser to a
 
 ## Tech stack
 
-- React 18
-- Vite 5
+- React 19
+- Vite 8
 - React Router
 - Recharts
-- Motion, Three.js, and OGL
+- Motion and OGL
 - Vitest and Testing Library tooling
 
 ## Local development
@@ -57,7 +57,7 @@ npm run dev
 
 Vite prints the local URL when it starts. Development builds also expose a demo sign-in that uses sample data and does not contact Janus API.
 
-The API base URL is defined in [`src/config/api.js`](src/config/api.js) and defaults to the deployed Janus API. Set `VITE_JANUS_API_URL` to override it during local development, such as pointing at a Janus API instance running locally.
+The API base URL is defined in [`src/config/api.js`](src/config/api.js) and defaults to the deployed Janus API. Copy `.env.example` to `.env` when running Janus API locally. Otherwise Nyx uses the deployed Janus API.
 
 ## Commands
 
@@ -66,12 +66,14 @@ The API base URL is defined in [`src/config/api.js`](src/config/api.js) and defa
 | `npm run dev` | Start the Vite development server |
 | `npm run build` | Create a production build in `dist/` |
 | `npm run preview` | Serve the production build locally |
+| `npm run lint` | Run ESLint |
 | `npm test` | Run Vitest |
-| `npm run check` | Run Vitest once and exit (used by CI) |
+| `npm run check` | Run ESLint and Vitest once and exit (used by CI) |
 | `npm run test:ui` | Open the Vitest UI |
 | `npm run test:coverage` | Run Vitest with coverage |
+| `npm run icons` | Regenerate the favicon, Apple touch icon, and UI icons from `artwork/Nyx-icon-source.png` |
 
-Vitest and Testing Library cover nutrition utilities, AI settings and credential requests, provider selection, model-backed error handling, and recommendation behavior.
+Vitest and Testing Library cover nutrition utilities, AI settings and credential requests, provider selection, model-backed error handling, and recommendation behavior. The production build also verifies that development-only demo fixtures are absent and that public icon assets stay within their size budgets.
 
 ## Application routes
 

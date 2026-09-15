@@ -1,4 +1,3 @@
-import React from 'react'
 import { addLocalDays } from '../utils/nutrition'
 
 const shortDate = new Intl.DateTimeFormat('en-IE', {

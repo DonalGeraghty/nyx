@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
@@ -13,11 +13,6 @@ import {
   getStoredToken,
   setStoredToken,
 } from '../config/api'
-import {
-  clearOfflineAccount,
-  getActiveOfflineProfile,
-  saveOfflineProfile,
-} from '../services/offlineStore'
 
 const AuthContext = createContext(null)
 const DEMO_TOKEN = 'local-demo-session'
@@ -33,27 +28,9 @@ export function AuthProvider({ children }) {
   const [sessionState, setSessionState] = useState('loading')
 
   const logout = useCallback(async () => {
-    const accountId = user?.accountId
     setStoredToken('')
     setUser(null)
     setSessionState('anonymous')
-    if (accountId && !user?.isDemo) await clearOfflineAccount(accountId)
-  }, [user?.accountId, user?.isDemo])
-
-  const useOfflineProfile = useCallback(async () => {
-    const profile = await getActiveOfflineProfile()
-    if (!profile) {
-      setUser(null)
-      setSessionState('anonymous')
-      return false
-    }
-    setUser({
-      email: profile.email,
-      accountId: profile.accountId,
-      offlineSession: true,
-    })
-    setSessionState('offline')
-    return true
   }, [])
 
   const bootstrap = useCallback(async () => {
@@ -74,28 +51,23 @@ export function AuthProvider({ children }) {
       const response = await authFetch(API_ENDPOINTS.AUTH_ME, { method: 'GET' })
       const data = await response.json().catch(() => ({}))
       if (response.ok && data.user?.email && data.user?.account_id) {
-        const verifiedUser = {
+        setUser({
           email: data.user.email,
           accountId: data.user.account_id,
-        }
-        await saveOfflineProfile(verifiedUser)
-        setUser(verifiedUser)
+        })
         setSessionState('verified')
-      } else if (response.status === 401 || response.status === 403) {
-        const profile = await getActiveOfflineProfile()
-        setStoredToken('')
+      } else {
+        if (response.status === 401 || response.status === 403) setStoredToken('')
         setUser(null)
         setSessionState('anonymous')
-        if (profile?.accountId) await clearOfflineAccount(profile.accountId)
-      } else {
-        await useOfflineProfile()
       }
     } catch {
-      await useOfflineProfile()
+      setUser(null)
+      setSessionState('anonymous')
     } finally {
       setLoading(false)
     }
-  }, [useOfflineProfile])
+  }, [])
 
   const loginAsDemo = useCallback(() => {
     if (!import.meta.env.DEV) return
@@ -107,13 +79,6 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     bootstrap()
   }, [bootstrap])
-
-  useEffect(() => {
-    if (sessionState !== 'offline') return undefined
-    const revalidate = () => bootstrap()
-    window.addEventListener('online', revalidate)
-    return () => window.removeEventListener('online', revalidate)
-  }, [bootstrap, sessionState])
 
   const login = useCallback(async (email, password) => {
     const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.AUTH_LOGIN}`, {
@@ -129,7 +94,6 @@ export function AuthProvider({ children }) {
     }
     if (!verifiedUser.accountId) throw new Error('Login response did not include an account ID')
     setStoredToken(data.token)
-    await saveOfflineProfile(verifiedUser)
     setUser(verifiedUser)
     setSessionState('verified')
     return data
@@ -151,7 +115,6 @@ export function AuthProvider({ children }) {
       throw new Error('Registration response did not include an account ID')
     }
     setStoredToken(data.token)
-    await saveOfflineProfile(verifiedUser)
     setUser(verifiedUser)
     setSessionState('verified')
     return data
@@ -166,12 +129,10 @@ export function AuthProvider({ children }) {
     })
     const data = await response.json().catch(() => ({}))
     if (!response.ok) throw new Error(data.error || 'Could not delete account')
-    const accountId = user.accountId
     setStoredToken('')
     setUser(null)
     setSessionState('anonymous')
-    await clearOfflineAccount(accountId)
-  }, [user?.accountId, user?.email])
+  }, [user?.email])
 
   const value = useMemo(
     () => ({

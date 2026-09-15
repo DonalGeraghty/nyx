@@ -1,5 +1,3 @@
-import React from 'react'
-
 function AmbientBackground() {
   return (
     <div className="nyx-ambient" aria-hidden="true">
