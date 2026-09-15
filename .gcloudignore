@@ -1,0 +1,12 @@
+.gcloudignore
+.git
+.github
+.agents
+.codex
+node_modules
+dist
+npm-debug.log*
+.env
+.env.*
+*.local
+gha-creds-*.json

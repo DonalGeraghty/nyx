@@ -57,7 +57,7 @@ npm run dev
 
 Vite prints the local URL when it starts. Development builds also expose a demo sign-in that uses sample data and does not contact Janus API.
 
-The API base URL is defined in [`src/config/api.js`](src/config/api.js) and defaults to the deployed Janus API. There is no `.env`/environment-variable override in this repo (unlike Aether and Minerva) — edit `API_BASE_URL` directly if you need to run the frontend against another Janus API deployment, such as one running locally.
+The API base URL is defined in [`src/config/api.js`](src/config/api.js) and defaults to the deployed Janus API. Set `VITE_JANUS_API_URL` to override it during local development, such as pointing at a Janus API instance running locally.
 
 ## Commands
 
@@ -67,6 +67,7 @@ The API base URL is defined in [`src/config/api.js`](src/config/api.js) and defa
 | `npm run build` | Create a production build in `dist/` |
 | `npm run preview` | Serve the production build locally |
 | `npm test` | Run Vitest |
+| `npm run check` | Run Vitest once and exit (used by CI) |
 | `npm run test:ui` | Open the Vitest UI |
 | `npm run test:coverage` | Run Vitest with coverage |
 
@@ -105,14 +106,22 @@ Nutrition values are estimates. Analysis results are not persisted until the use
 
 ## Production deployment
 
-The GitHub Actions workflow in [`.github/workflows/deploy-gcp.yml`](.github/workflows/deploy-gcp.yml) performs the following:
+The production container builds the Vite application with Node 24 and serves it through nginx on port `8080`, including SPA fallback, immutable caching for hashed assets, and a `/health` endpoint.
 
-1. Installs dependencies and builds the Vite application.
-2. Generates a Dockerfile and nginx config inline (neither is committed to this repo) and packages `dist/` in an Nginx container.
-3. Pushes the image to Google Artifact Registry.
-4. Deploys the image to Google Cloud Run in `europe-west1`.
+```bash
+docker build -t nyx .
+docker run --rm -p 8080:8080 nyx
+```
 
-The workflow expects a `GCP_SA_KEY` GitHub Actions secret with permission to build, push, and deploy the service. There is no local Docker build in this repo — to build a production-style container locally, copy the Dockerfile/nginx config out of the workflow file, or run `npm run build` and `npm run preview` to check the build itself.
+The GitHub Actions workflow at [`.github/workflows/deploy-gcp.yml`](.github/workflows/deploy-gcp.yml) checks every pull request (`npm run check`) and, on pushes to `main`/`master` or a manual run, builds the container with the `VITE_JANUS_API_URL` build argument, pushes SHA and `latest` tags to the `nyx` Artifact Registry repository, deploys it to Cloud Run with startup and liveness probes against `/health`, and smoke-tests the deployed URL.
+
+Configure this repository before the first workflow run:
+
+- Preferred repository variable `GCP_WORKLOAD_IDENTITY_PROVIDER`: the full Google Workload Identity Provider resource name. When set, the workflow uses keyless GitHub OIDC authentication.
+- Optional repository variable `GCP_SERVICE_ACCOUNT`: the deployer service account used with Workload Identity Federation. It defaults to `nyx-github-deployer@donal-geraghty-home.iam.gserviceaccount.com`.
+- Fallback repository secret `GCP_SA_KEY`: a service-account JSON key. The workflow uses this only while `GCP_WORKLOAD_IDENTITY_PROVIDER` is unset — this is how the existing deployment already authenticates.
+- Optional repository variable `VITE_JANUS_API_URL`: defaults to the current deployed Janus API URL when omitted.
+- Optional repository variable `CLOUD_RUN_SERVICE_ACCOUNT`: a dedicated runtime identity such as `nyx-runtime@donal-geraghty-home.iam.gserviceaccount.com`. Until set, Cloud Run retains its current runtime identity.
 
 Nginx serves `index.html` with no-cache headers while keeping fingerprinted static assets immutable.
 
@@ -160,7 +169,7 @@ Nyx (React/Vite, Cloud Run)      ─┘                                 │     
                                                                            (Web Push reminders, every 5 minutes)
 ```
 
-- All three frontends build the same way: a Node build stage produces a Vite bundle, served by an `nginx:alpine` container on port `8080` with SPA fallback and immutable asset caching. Aether and Minerva commit their Dockerfile/nginx config to their repos and build a container image that's pushed to their own Artifact Registry repository; Nyx's workflow generates the equivalent Dockerfile and nginx config inline instead (see "Production deployment" above), but deploys the same way — its own Artifact Registry repository and its own `deploy-gcp.yml` workflow that builds, pushes, and runs `gcloud run deploy`.
-- Janus API deploys differently: it builds directly from source with `gcloud run deploy --source .`, so it has no Artifact Registry step and authenticates with a static `GCP_SA_KEY` secret rather than the Workload Identity Federation that Aether and Minerva prefer.
-- Nyx points at Janus API via the hardcoded default (or an edited `API_BASE_URL`) in `src/config/api.js`. Because Aether and Minerva point at the same Janus API deployment and Firestore project, a single account's login session, encrypted AI-provider keys, and selected provider/model are shared across all three apps — only each app's own nutrition, workout, or flashcard data stays separate.
+- All three frontends build the same way: a Node build stage produces a Vite bundle, served by an `nginx:alpine` container on port `8080` with SPA fallback and immutable asset caching. Each commits its own `Dockerfile`/`nginx.conf` and has its own Artifact Registry repository and its own `deploy-gcp.yml` workflow that builds, pushes, and runs `gcloud run deploy`, preferring Workload Identity Federation with a `GCP_SA_KEY` secret as a fallback.
+- Janus API deploys differently: it builds directly from source with `gcloud run deploy --source .`, so it has no Artifact Registry step and authenticates with a static `GCP_SA_KEY` secret rather than the Workload Identity Federation the three frontends prefer.
+- Nyx points at Janus API via the `VITE_JANUS_API_URL` build argument (see "Local development" above). Because Aether and Minerva point at the same Janus API deployment and Firestore project, a single account's login session, encrypted AI-provider keys, and selected provider/model are shared across all three apps — only each app's own nutrition, workout, or flashcard data stays separate.
 - Nyx calls Janus API's `/api/nutrition/*` endpoints plus the shared `/api/auth/*` and `/api/user/*` endpoints for account and AI-credential management. Aether and Minerva call their own equivalent endpoints on the same backend.

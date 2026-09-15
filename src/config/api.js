@@ -1,5 +1,8 @@
-// Janus — auth API (Cloud Run). URL updates if service name changes.
-export const API_BASE_URL = 'https://janus-api-schep5xsoq-ew.a.run.app'
+// Janus API — shared backend (Cloud Run). URL updates if service name changes.
+export const API_BASE_URL = (
+  import.meta.env?.VITE_JANUS_API_URL
+  || 'https://janus-api-schep5xsoq-ew.a.run.app'
+).replace(/\/$/, '')
 
 export const API_ENDPOINTS = {
   AUTH_REGISTER: '/api/auth/register',
