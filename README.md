@@ -2,7 +2,7 @@
 
 Nyx is an authenticated nutrition-tracking web application. It turns a plain-language meal description into structured calorie and protein estimates, lets the user review the result, and stores only entries the user chooses to log.
 
-The browser application is backed by [Janus Gate](https://github.com/DonalGeraghty/Janus-Gate), which provides authentication, encrypted per-user AI-provider credential storage, meal analysis, and nutrition-entry persistence.
+The browser application is backed by [Janus API](https://github.com/DonalGeraghty/janus-api), which provides authentication, encrypted per-user AI-provider credential storage, meal analysis, and nutrition-entry persistence. The same Janus account, encrypted AI-provider credentials, and provider/model selection are shared with the sibling apps [Aether](https://github.com/DonalGeraghty/aether) (workouts) and [Minerva](https://github.com/DonalGeraghty/minerva) (flashcards). See [Overall architecture](#overall-architecture) below for how the four services fit together.
 
 ## Features
 
@@ -22,15 +22,15 @@ The browser application is backed by [Janus Gate](https://github.com/DonalGeragh
 ```text
 Browser
   └─ Nyx (React/Vite)
-       └─ Janus Gate (Flask API)
+       └─ Janus API (Flask)
             ├─ Firestore: users and nutrition entries
             ├─ Cloud KMS: provider-key encryption
             └─ OpenAI, Mistral AI, or Anthropic: structured meal analysis
 ```
 
-Nyx is a standard web application. It does not register a service worker, provide an installable PWA shell, or maintain an offline nutrition cache or sync queue.
+Nyx is a standard web application. It does not register a service worker, provide an installable PWA shell, or maintain an offline nutrition cache or sync queue. (The `idb` dependency and `public/manifest.webmanifest` are unused legacy artifacts from a removed PWA/offline-sync feature.)
 
-Nyx never sends meal data or provider credentials directly from the browser to a model vendor. It communicates with Janus Gate over HTTPS and uses a bearer JWT for authenticated requests.
+Nyx never sends meal data or provider credentials directly from the browser to a model vendor. It communicates with Janus API over HTTPS and uses a bearer JWT for authenticated requests.
 
 ## Tech stack
 
@@ -55,9 +55,9 @@ npm install
 npm run dev
 ```
 
-Vite prints the local URL when it starts. Development builds also expose a demo sign-in that uses sample data and does not contact Janus Gate.
+Vite prints the local URL when it starts. Development builds also expose a demo sign-in that uses sample data and does not contact Janus API.
 
-The API base URL is defined in [`src/config/api.js`](src/config/api.js). Change `API_BASE_URL` there if you need to run the frontend against another Janus Gate deployment.
+The API base URL is defined in [`src/config/api.js`](src/config/api.js) and defaults to the deployed Janus API. There is no `.env`/environment-variable override in this repo (unlike Aether and Minerva) — edit `API_BASE_URL` directly if you need to run the frontend against another Janus API deployment, such as one running locally.
 
 ## Commands
 
@@ -84,7 +84,7 @@ Vitest and Testing Library cover nutrition utilities, AI settings and credential
 
 All application routes use the authenticated layout. Visitors without a valid session see the registration and sign-in screen.
 
-## Janus Gate integration
+## Janus API integration
 
 Nyx uses these API groups:
 
@@ -97,9 +97,9 @@ Nyx uses these API groups:
 
 The Data page requests only its selected Monday-to-Sunday period. Local week boundaries are converted to timezone-aware UTC instants before being sent as the entry list's inclusive `start` and exclusive `end` parameters. CSV export uses a separate `all=true` request so the download contains the complete nutrition history without changing the selected weekly view.
 
-The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. Supplied OpenAI, Mistral AI, and Anthropic keys exist only in their individual component state while being submitted. Janus Gate authenticates and encrypts each key without generating model output; Nyx can retrieve only safe status metadata such as whether a key is configured and its last four characters. Keys can be configured before provider credit is added, while billing and spend-limit errors are reported when an AI request is made.
+The JWT is stored in browser local storage under `dg_auth_token` and attached as an `Authorization: Bearer ...` header. Supplied OpenAI, Mistral AI, and Anthropic keys exist only in their individual component state while being submitted. Janus API authenticates and encrypts each key without generating model output; Nyx can retrieve only safe status metadata such as whether a key is configured and its last four characters. Keys can be configured before provider credit is added, while billing and spend-limit errors are reported when an AI request is made.
 
-All three keys can remain configured independently. Janus Gate resolves the saved provider and model when processing meal analysis and recommendation requests, so provider choice and credentials are never added to nutrition request bodies.
+All three keys can remain configured independently. Janus API resolves the saved provider and model when processing meal analysis and recommendation requests, so provider choice and credentials are never added to nutrition request bodies.
 
 Nutrition values are estimates. Analysis results are not persisted until the user selects **Log meal**.
 
@@ -108,11 +108,11 @@ Nutrition values are estimates. Analysis results are not persisted until the use
 The GitHub Actions workflow in [`.github/workflows/deploy-gcp.yml`](.github/workflows/deploy-gcp.yml) performs the following:
 
 1. Installs dependencies and builds the Vite application.
-2. Packages `dist/` in an Nginx container.
+2. Generates a Dockerfile and nginx config inline (neither is committed to this repo) and packages `dist/` in an Nginx container.
 3. Pushes the image to Google Artifact Registry.
 4. Deploys the image to Google Cloud Run in `europe-west1`.
 
-The workflow expects a `GCP_SA_KEY` GitHub Actions secret with permission to build, push, and deploy the service.
+The workflow expects a `GCP_SA_KEY` GitHub Actions secret with permission to build, push, and deploy the service. There is no local Docker build in this repo — to build a production-style container locally, copy the Dockerfile/nginx config out of the workflow file, or run `npm run build` and `npm run preview` to check the build itself.
 
 Nginx serves `index.html` with no-cache headers while keeping fingerprinted static assets immutable.
 
@@ -123,7 +123,7 @@ Nginx serves `index.html` with no-cache headers while keeping fingerprinted stat
 ├── public/                 # Website branding assets
 ├── src/
 │   ├── components/         # Shared UI and visual components
-│   ├── config/             # Janus Gate API configuration
+│   ├── config/             # Janus API configuration
 │   ├── context/            # Authentication state
 │   ├── data/               # Development demo data
 │   ├── pages/              # Route-level screens
@@ -137,6 +137,30 @@ Nginx serves `index.html` with no-cache headers while keeping fingerprinted stat
 └── vite.config.js
 ```
 
-## Related project
+## Related projects
 
-- [Janus Gate](https://github.com/DonalGeraghty/Janus-Gate) — Flask API for authentication, encrypted AI-provider credentials, model routing, and nutrition data
+- [Janus API](https://github.com/DonalGeraghty/janus-api) — Flask API for authentication, encrypted AI-provider credentials, model routing, and nutrition/workout/flashcard data
+- [Aether](https://github.com/DonalGeraghty/aether) — sibling frontend for workout tracking
+- [Minerva](https://github.com/DonalGeraghty/minerva) — sibling frontend for AI-assisted flashcards
+
+## Overall architecture
+
+Nyx is one of three independently deployed React/Vite frontends built around a single shared backend, [Janus API](https://github.com/DonalGeraghty/janus-api). All four services run as separate Cloud Run services in the same Google Cloud project (`donal-geraghty-home`, region `europe-west1`).
+
+```text
+Aether (React/Vite, Cloud Run)   ─┐
+Minerva (React/Vite, Cloud Run)  ─┼─▶ Janus API (Flask, Cloud Run) ─┬─▶ Firestore
+Nyx (React/Vite, Cloud Run)      ─┘                                 │     (users, credentials, nutrition,
+                                                                     │      workouts, flashcards)
+                                                                     ├─▶ Cloud KMS
+                                                                     │     (encrypts each user's provider key)
+                                                                     ├─▶ OpenAI / Mistral AI / Anthropic
+                                                                     │     (called with the user's own key)
+                                                                     └─▶ Cloud Scheduler
+                                                                           (Web Push reminders, every 5 minutes)
+```
+
+- All three frontends build the same way: a Node build stage produces a Vite bundle, served by an `nginx:alpine` container on port `8080` with SPA fallback and immutable asset caching. Aether and Minerva commit their Dockerfile/nginx config to their repos and build a container image that's pushed to their own Artifact Registry repository; Nyx's workflow generates the equivalent Dockerfile and nginx config inline instead (see "Production deployment" above), but deploys the same way — its own Artifact Registry repository and its own `deploy-gcp.yml` workflow that builds, pushes, and runs `gcloud run deploy`.
+- Janus API deploys differently: it builds directly from source with `gcloud run deploy --source .`, so it has no Artifact Registry step and authenticates with a static `GCP_SA_KEY` secret rather than the Workload Identity Federation that Aether and Minerva prefer.
+- Nyx points at Janus API via the hardcoded default (or an edited `API_BASE_URL`) in `src/config/api.js`. Because Aether and Minerva point at the same Janus API deployment and Firestore project, a single account's login session, encrypted AI-provider keys, and selected provider/model are shared across all three apps — only each app's own nutrition, workout, or flashcard data stays separate.
+- Nyx calls Janus API's `/api/nutrition/*` endpoints plus the shared `/api/auth/*` and `/api/user/*` endpoints for account and AI-credential management. Aether and Minerva call their own equivalent endpoints on the same backend.
